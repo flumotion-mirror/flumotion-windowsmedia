@@ -1,0 +1,37 @@
+<registry>
+
+  <components>
+    <component type="asf-muxer"
+               base="flumotion/component/asf">
+      <source location="flumotion.component.asf.asf" />
+
+      <entries>
+        <entry type="component" location="asf.py"
+               function="createComponent" />
+      </entries>
+
+      <properties>
+        <property name="source" type="string" multiple="yes" />
+        <property name="feed" type="string" multiple="yes" />
+      </properties>
+    </component>
+  </components>
+
+  <bundles>
+
+    <bundle project="windowsmedia" name="asf-component">
+        <dependencies>
+            <dependency name="component" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/asf">
+                <filename location="__init__.py" />
+                <filename location="asf.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+
+</registry> 

@@ -1,0 +1,47 @@
+Name:           @PACKAGE@
+Version:        @VERSION@
+Release:        @RELEASE@
+Summary:        Flumotion Windows Media Streaming support.
+
+Group:          Applications/Internet
+License:	GPL
+URL:            http://www.fluendo.com/
+Source:         %{name}-%{version}.tar.bz2
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+
+Requires:	flumotion > 0.1.9
+
+BuildRequires:	gettext
+BuildRequires:	python >= 2.3
+#BuildRequires:	epydoc
+BuildArch:	noarch
+
+%description
+Flumotion Windows Media Streaming support.
+
+%prep
+%setup -q
+
+%build
+%configure
+
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+%makeinstall
+
+%find_lang flumotion-windowsmedia
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files -f flumotion-windowsmedia.lang
+%defattr(-,root,root,-)
+%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion LICENSE.GPL
+%{_libdir}/flumotion
+
+%changelog
+* Fri Oct  7 2005 Julien Moutte <julien at fluendo dot com>
+- updated

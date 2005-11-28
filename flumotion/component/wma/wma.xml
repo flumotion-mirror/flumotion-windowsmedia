@@ -1,0 +1,38 @@
+<registry>
+
+  <components>
+    <component type="wma-encoder"
+               base="flumotion/component/wma">
+      <source location="flumotion.component.wma.wma" />
+
+      <entries>
+        <entry type="component" location="wma.py"
+               function="createComponent" />
+      </entries>
+
+      <properties>
+        <property name="source" type="string" multiple="no" />
+        <property name="feed" type="string" required="yes" multiple="yes" />
+        <property name="bitrate" type="int" />
+      </properties>
+    </component>
+  </components>
+
+  <bundles>
+
+    <bundle project="windowsmedia" name="wma-component">
+        <dependencies>
+            <dependency name="component" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/wma">
+                <filename location="__init__.py" />
+                <filename location="wma.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+
+</registry> 
