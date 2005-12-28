@@ -5,15 +5,17 @@
                base="flumotion/component/asf">
       <source location="flumotion.component.asf.asf" />
 
+      <eater name="default" />
+      <feeder name="default" multiple="yes" />
+
       <entries>
         <entry type="component" location="asf.py"
-               function="createComponent" />
+               function="ASFMuxer" />
       </entries>
 
       <properties>
-        <property name="source" type="string" multiple="yes" />
-        <property name="feed" type="string" multiple="yes" />
       </properties>
+
     </component>
   </components>
 

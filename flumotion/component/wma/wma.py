@@ -22,21 +22,11 @@ import os
 
 from flumotion.component import feedcomponent
 
-class WMA(feedcomponent.ParseLaunchComponent):
+class WMAEncoder(feedcomponent.ParseLaunchComponent):
+    def get_pipeline_string(self, properties):
+        return "audioconvert !fluwmaenc name=encoder"
 
-    def __init__(self, name, eaters, pipeline):
-        feedcomponent.ParseLaunchComponent.__init__(self, name,
-                                                    eaters,
-                                                    ['default'],
-                                                    pipeline)
-
-def createComponent(config):
-
-    component = WMA(config['name'], [config['source']],
-                    "audioconvert ! fluwmaenc name=encoder")
-
-    element = component.pipeline.get_by_name('encoder')
-    if config.has_key('bitrate'):
-        element.set_property('bitrate', config['bitrate'])
-                
-    return component
+    def configure_pipeline(self, pipeline, properties):
+        element = pipeline.get_by_name('encoder')
+        if properties.has_key('bitrate'):
+            element.set_property('bitrate', config['bitrate'])

@@ -22,21 +22,11 @@ import os
 
 from flumotion.component import feedcomponent
 
-class WMV(feedcomponent.ParseLaunchComponent):
+class WMVEncoder(feedcomponent.ParseLaunchComponent):
+    def get_pipeline_string(self, properties):
+        return "ffmpegcolorspace ! dmoenc_wmvdmoe2v3 name=encoder"
 
-    def __init__(self, name, eaters, pipeline):
-        feedcomponent.ParseLaunchComponent.__init__(self, name,
-                                                    eaters,
-                                                    ['default'],
-                                                    pipeline)
-
-def createComponent(config):
-
-    component = WMV(config['name'], [config['source']],
-                    "ffmpegcolorspace ! dmoenc_wmvdmoe2v3 name=encoder")
-
-    element = component.pipeline.get_by_name('encoder')
-    if config.has_key('bitrate'):
-        element.set_property('bitrate', config['bitrate'])
-                
-    return component
+    def configure_pipeline(self, pipeline, properties):
+        element = component.pipeline.get_by_name('encoder')
+        if properties.has_key('bitrate'):
+            element.set_property('bitrate', config['bitrate'])

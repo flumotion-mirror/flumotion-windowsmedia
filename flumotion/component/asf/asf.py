@@ -22,27 +22,18 @@ import gst
 
 from flumotion.component import feedcomponent
 
-class ASF(feedcomponent.ParseLaunchComponent):
+class ASFMuxer(feedcomponent.ParseLaunchComponent):
+    def get_pipeline_string(self, properties):
+        pipeline = 'fluasfmux broadcast=true name=muxer '
 
-    def __init__(self, name, eaters, pipeline):
-        feedcomponent.ParseLaunchComponent.__init__(self, name,
-                                                    eaters,
-                                                    ['default'],
-                                                    pipeline)
+        for eater in self.config['source']:
+            if gst.gst_version < (0, 9):
+                pipeline += '{ @ eater:%s @ ! queue max-size-buffers=16 } ! muxer. '\
+                    % eater
+            else:
+                pipeline += '@ eater:%s @ ! queue max-size-buffers=16 ! muxer. '\
+                    % eater
 
-def createComponent(config):
-    pipeline = 'fluasfmux broadcast=true name=muxer '
+        pipeline += 'muxer.'
 
-    for eater in config['source']:
-        if gst.gst_version < (0, 9):
-            pipeline += '{ @ eater:%s @ ! queue max-size-buffers=16 } ! muxer. '\
-                % eater
-        else:
-            pipeline += '@ eater:%s @ ! queue max-size-buffers=16 ! muxer. '\
-                % eater
-
-    pipeline += 'muxer.'
-
-    component = ASF(config['name'], config['source'], pipeline)
-
-    return component
+        return pipeline

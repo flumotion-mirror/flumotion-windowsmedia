@@ -1,0 +1,9 @@
+2005-12-28  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/asf/asf.py:
+	* flumotion/component/asf/asf.xml:
+	* flumotion/component/wma/wma.py:
+	* flumotion/component/wma/wma.xml:
+	* flumotion/component/wmv/wmv.py:
+	* flumotion/component/wmv/wmv.xml:
+	  update for new component protocol

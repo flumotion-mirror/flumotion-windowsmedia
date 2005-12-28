@@ -5,16 +5,18 @@
                base="flumotion/component/wma">
       <source location="flumotion.component.wma.wma" />
 
+      <eater name="default" />
+      <feeder name="default" />
+
       <entries>
         <entry type="component" location="wma.py"
-               function="createComponent" />
+               function="WMAEncoder" />
       </entries>
 
       <properties>
-        <property name="source" type="string" multiple="no" />
-        <property name="feed" type="string" required="yes" multiple="yes" />
         <property name="bitrate" type="int" />
       </properties>
+
     </component>
   </components>
 
