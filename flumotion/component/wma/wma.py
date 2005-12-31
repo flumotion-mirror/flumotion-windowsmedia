@@ -29,4 +29,4 @@ class WMAEncoder(feedcomponent.ParseLaunchComponent):
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')
         if properties.has_key('bitrate'):
-            element.set_property('bitrate', config['bitrate'])
+            element.set_property('bitrate', properties['bitrate'])

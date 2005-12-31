@@ -32,12 +32,13 @@ rm -rf $RPM_BUILD_ROOT
 
 %makeinstall
 
-%find_lang flumotion-windowsmedia
+# %find_lang flumotion-windowsmedia
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files -f flumotion-windowsmedia.lang
+# %files -f flumotion-windowsmedia.lang
+%files
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion LICENSE.GPL
 %{_libdir}/flumotion
