@@ -2,7 +2,7 @@
 set -x
 
 aclocal -I common || exit 1
-libtoolize --force || exit 1
+# libtoolize --force || exit 1
 # autoheader || exit 1
 autoconf || exit 1
 automake -a || exit 1
