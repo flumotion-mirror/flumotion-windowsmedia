@@ -8,7 +8,7 @@ AUTHORS=$srcdir/AUTHORS
 
 AC_SUBST(PYGTK_REQ, 2.6.3)
 AC_SUBST(PYGST_REQ, 0.8.0)
-AC_SUBST(GST_REQ, 0.9)
+AC_SUBST(GST_REQ, 0.10.0)
 AC_SUBST(FLU_REQ, 0.1.9.1)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
@@ -35,7 +35,7 @@ dnl useful when we compile our own python modules
 dnl AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
 dnl check for GStreamer
-PKG_CHECK_MODULES(GST, gstreamer-0.9 >= $GST_REQ)
+PKG_CHECK_MODULES(GST, gstreamer-0.10 >= $GST_REQ)
 
 dnl check for pygtk
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_REQ)
