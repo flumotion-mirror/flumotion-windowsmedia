@@ -8,7 +8,6 @@ include $(srcdir)/common/pychecker.mk
 SUBDIRS = flumotion common
 
 EXTRA_DIST = \
-	LICENSE.GPL \
 	LICENSE.Flumotion \
 	flumotion-windowsmedia.spec \
 	misc/preamble.py
