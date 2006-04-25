@@ -5,8 +5,8 @@
                base="flumotion/component/asf">
       <source location="flumotion.component.asf.asf" />
 
-      <eater name="default" />
-      <feeder name="default" multiple="yes" />
+      <eater name="default" multiple="yes" />
+      <feeder name="default" />
 
       <entries>
         <entry type="component" location="asf.py"
