@@ -1,3 +1,8 @@
+2006-04-27  Julien MOUTTE  <julien@moutte.net>
+
+	* flumotion/component/wmv/wmv.py: Fix a bug. How did that
+	get in here....
+
 2006-04-25  Julien MOUTTE  <julien@moutte.net>
 
 	* flumotion/component/asf/asf.xml: Hmmm how could my 
