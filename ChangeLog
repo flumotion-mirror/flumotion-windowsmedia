@@ -1,5 +1,23 @@
 2006-04-29  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* configure.ac:
+	* flumotion/component/asf/Makefile.am:
+	* flumotion/component/asf/__init__.py:
+	* flumotion/component/asf/asf.py:
+	* flumotion/component/asf/asf.xml:
+	* flumotion/component/muxers/Makefile.am:
+	* flumotion/component/wma/Makefile.am:
+	* flumotion/component/wma/__init__.py:
+	* flumotion/component/wma/wma.py:
+	* flumotion/component/wma/wma.xml:
+	* flumotion/component/wmv/Makefile.am:
+	* flumotion/component/wmv/__init__.py:
+	* flumotion/component/wmv/wmv.py:
+	* flumotion/component/wmv/wmv.xml:
+	  first pass at moving directories around
+
+2006-04-29  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* Makefile.am:
 	* configure.ac:
 	* flumotion/component/wma/wma.py:

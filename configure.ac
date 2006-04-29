@@ -139,9 +139,11 @@ misc/Makefile
 flumotion/Makefile
 flumotion/test/Makefile
 flumotion/component/Makefile
-flumotion/component/wmv/Makefile
-flumotion/component/wma/Makefile
-flumotion/component/asf/Makefile
+flumotion/component/encoders/Makefile
+flumotion/component/encoders/wmv/Makefile
+flumotion/component/encoders/wma/Makefile
+flumotion/component/muxers/Makefile
+flumotion/component/muxers/asf/Makefile
 flumotion/project/Makefile
 flumotion/project/windowsmedia.py
 flumotion-windowsmedia.spec
