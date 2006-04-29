@@ -11,10 +11,10 @@ EXTRA_DIST = \
 	LICENSE.Flumotion \
 	flumotion-windowsmedia.spec
 
-PYCHECKER_WHITELIST = flumotion/component/*/*.py
+PYCHECKER_WHITELIST = flumotion/component/*/*/*.py
 PYCHECKER_BLACKLIST =
 
 COVERAGE_MODULES = \
-	flumotion.component.asf \
-	flumotion.component.wmv \
-	flumotion.component.wma
+	flumotion.component.muxers.asf \
+	flumotion.component.encoders.wmv \
+	flumotion.component.encoders.wma
