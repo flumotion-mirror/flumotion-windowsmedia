@@ -1,7 +1,7 @@
 include $(top_srcdir)/common/python.mk
 
 component_PYTHON = __init__.py wmv.py
-componentdir = $(libdir)/flumotion/python/flumotion/component/wmv
+componentdir = $(libdir)/flumotion/python/flumotion/component/encoders/wmv
 component_DATA = \
 	wmv.xml
 

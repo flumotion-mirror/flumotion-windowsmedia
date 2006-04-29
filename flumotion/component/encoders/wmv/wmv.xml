@@ -2,8 +2,8 @@
 
   <components>
     <component type="wmv-encoder"
-               base="flumotion/component/wmv">
-      <source location="flumotion.component.wmv.wmv" />
+               base="flumotion/component/encoders/wmv">
+      <source location="flumotion.component.encoders.wmv.wmv" />
 
       <eater name="default" />
       <feeder name="default" />
@@ -28,7 +28,7 @@
         </dependencies>
 
         <directories>
-            <directory name="flumotion/component/wmv">
+            <directory name="flumotion/component/encoders/wmv">
                 <filename location="__init__.py" />
                 <filename location="wmv.py" />
             </directory>

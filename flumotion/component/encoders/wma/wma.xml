@@ -2,8 +2,8 @@
 
   <components>
     <component type="wma-encoder"
-               base="flumotion/component/wma">
-      <source location="flumotion.component.wma.wma" />
+               base="flumotion/component/encoders/wma">
+      <source location="flumotion.component.encoders.wma.wma" />
 
       <eater name="default" />
       <feeder name="default" />
@@ -28,7 +28,7 @@
         </dependencies>
 
         <directories>
-            <directory name="flumotion/component/wma">
+            <directory name="flumotion/component/encoders/wma">
                 <filename location="__init__.py" />
                 <filename location="wma.py" />
             </directory>

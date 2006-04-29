@@ -2,8 +2,8 @@
 
   <components>
     <component type="asf-muxer"
-               base="flumotion/component/asf">
-      <source location="flumotion.component.asf.asf" />
+               base="flumotion/component/muxers/asf">
+      <source location="flumotion.component.muxers.asf.asf" />
 
       <eater name="default" multiple="yes" />
       <feeder name="default" />
@@ -27,7 +27,7 @@
         </dependencies>
 
         <directories>
-            <directory name="flumotion/component/asf">
+            <directory name="flumotion/component/muxers/asf">
                 <filename location="__init__.py" />
                 <filename location="asf.py" />
             </directory>
