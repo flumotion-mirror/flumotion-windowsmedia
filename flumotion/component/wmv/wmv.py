@@ -12,8 +12,6 @@
 
 # Headers in this file shall remain intact.
 
-import os
-
 from flumotion.component import feedcomponent
 
 class WMVEncoder(feedcomponent.ParseLaunchComponent):

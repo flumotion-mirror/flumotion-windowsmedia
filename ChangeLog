@@ -1,3 +1,15 @@
+2006-04-29  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* Makefile.am:
+	* configure.ac:
+	* flumotion/component/wma/wma.py:
+	* flumotion/component/wmv/wmv.py:
+	* misc/Makefile.am:
+	* misc/pycheckerhelp.py:
+	* misc/pycheckerrc:
+	  make "make check" work to avoid syntax errors in the future
+	  fix some more pychecker errors
+
 2006-04-27  Julien MOUTTE  <julien@moutte.net>
 
 	* flumotion/component/wmv/wmv.py: Fix a bug. How did that

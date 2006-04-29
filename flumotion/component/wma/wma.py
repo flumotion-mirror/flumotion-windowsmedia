@@ -12,13 +12,11 @@
 
 # Headers in this file shall remain intact.
 
-import os
-
 from flumotion.component import feedcomponent
 
 class WMAEncoder(feedcomponent.ParseLaunchComponent):
     def get_pipeline_string(self, properties):
-        return "audioconvert !fluwmaenc name=encoder"
+        return "audioconvert ! fluwmaenc name=encoder"
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')

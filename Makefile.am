@@ -5,18 +5,16 @@ ACLOCAL_AMFLAGS = -I common
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 
-SUBDIRS = flumotion common
+SUBDIRS = flumotion common misc
 
 EXTRA_DIST = \
 	LICENSE.Flumotion \
-	flumotion-windowsmedia.spec \
-	misc/preamble.py
+	flumotion-windowsmedia.spec
 
-CLEANFILES = misc/setup.py
-
-PYCHECKER_WHITELIST =
+PYCHECKER_WHITELIST = flumotion/component/*/*.py
 PYCHECKER_BLACKLIST =
 
 COVERAGE_MODULES = \
+	flumotion.component.asf \
 	flumotion.component.wmv \
 	flumotion.component.wma

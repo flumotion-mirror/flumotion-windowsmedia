@@ -1,15 +1,18 @@
 AC_INIT(README)
 
-AS_VERSION(flumotion-windowsmedia, FT, 0, 0, 0, 1)
-AC_SUBST(RELEASE, $FT_RELEASE)
+AS_VERSION(flumotion-windowsmedia, FW, 0, 0, 0, 1)
+AC_SUBST(RELEASE, $FW_RELEASE)
 
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
-AC_SUBST(PYGTK_REQ, 2.6.3)
-AC_SUBST(PYGST_REQ, 0.8.0)
-AC_SUBST(GST_REQ, 0.10.0)
-AC_SUBST(FLU_REQ, 0.1.9.1)
+dnl fluwmaenc is only with 0.10, so no point in supporting 0.8
+AC_SUBST(PYGTK_010_REQ, 2.6.3)
+AC_SUBST(PYGST_010_REQ, 0.10.0)
+AC_SUBST(GST_010_REQ, 0.10.0)
+AC_SUBST(FLU_REQ, 0.2.0)
+GST_010_SUPPORTED=yes
+AC_SUBST(GST_010_SUPPORTED)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
@@ -35,10 +38,10 @@ dnl useful when we compile our own python modules
 dnl AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
 dnl check for GStreamer
-PKG_CHECK_MODULES(GST, gstreamer-0.10 >= $GST_REQ)
+PKG_CHECK_MODULES(GST, gstreamer-0.10 >= $GST_010_REQ)
 
 dnl check for pygtk
-PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_REQ)
+PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_010_REQ)
 PYGTK_DIR="`$PKG_CONFIG --variable=pyexecdir pygtk-2.0`"
 AC_SUBST(PYGTK_DIR)
 AC_MSG_NOTICE(Using pygtk installed in $PYGTK_DIR)
@@ -72,8 +75,8 @@ else
 fi
 
 dnl checks for gst-python
-PKG_CHECK_MODULES(PYGST, gst-python-0.8 >= $PYGST_REQ)
-PYGST_DIR="`$PKG_CONFIG --variable=pyexecdir gst-python-0.8`"
+PKG_CHECK_MODULES(PYGST, gst-python-0.10 >= $PYGST_010_REQ)
+PYGST_DIR="`$PKG_CONFIG --variable=pyexecdir gst-python-0.10`"
 AC_SUBST(PYGST_DIR)
 AC_MSG_NOTICE(Using gstreamer-python installed in $PYGST_DIR)
 
@@ -132,6 +135,7 @@ dnl output stuff
 AC_OUTPUT(
 Makefile
 common/Makefile
+misc/Makefile
 flumotion/Makefile
 flumotion/test/Makefile
 flumotion/component/Makefile
