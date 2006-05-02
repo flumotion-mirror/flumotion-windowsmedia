@@ -4,7 +4,7 @@ Release:        @RELEASE@
 Summary:        Flumotion Windows Media Streaming support.
 
 Group:          Applications/Internet
-License:	GPL
+License:	Proprietary
 URL:            http://www.fluendo.com/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
