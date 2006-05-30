@@ -1,5 +1,10 @@
 2006-05-30  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* configure.ac:
+	  disable libtool, this is Python code
+
+2006-05-30  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* flumotion/component/encoders/Makefile.am:
 	* flumotion/component/encoders/__init__.py:
 	* flumotion/component/muxers/__init__.py:
