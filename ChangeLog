@@ -1,3 +1,10 @@
+2006-05-30  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/Makefile.am:
+	* flumotion/component/encoders/__init__.py:
+	* flumotion/component/muxers/__init__.py:
+	  commit some build files
+
 2006-05-02  Julien MOUTTE  <julien@moutte.net>
 
 	* COPYING: Fix licence.
