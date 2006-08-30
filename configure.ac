@@ -6,11 +6,7 @@ AC_SUBST(RELEASE, $FW_RELEASE)
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
-dnl fluwmaenc is only with 0.10, so no point in supporting 0.8
-AC_SUBST(PYGTK_010_REQ, 2.6.3)
-AC_SUBST(PYGST_010_REQ, 0.10.0)
-AC_SUBST(GST_010_REQ, 0.10.0)
-AC_SUBST(FLU_REQ, 0.2.0)
+AC_SUBST(FLU_REQ, 0.3.0)
 GST_010_SUPPORTED=yes
 AC_SUBST(GST_010_SUPPORTED)
 
@@ -34,55 +30,7 @@ AS_PATH_PYTHON(2.3)
 dnl useful when we compile our own python modules
 dnl AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
-dnl check for GStreamer
-PKG_CHECK_MODULES(GST, gstreamer-0.10 >= $GST_010_REQ)
-
-dnl check for pygtk
-PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_010_REQ)
-PYGTK_DIR="`$PKG_CONFIG --variable=pyexecdir pygtk-2.0`"
-AC_SUBST(PYGTK_DIR)
-AC_MSG_NOTICE(Using pygtk installed in $PYGTK_DIR)
-PYGTK_VERSION="`$PKG_CONFIG --modversion pygtk-2.0`"
-if test "x$PYGTK_VERSION" = "x2.5.2"
-then
-  AC_MSG_ERROR([PyGTK 2.5.2 contains known bugs, please install other version])
-fi
-
 export PYTHONPATH=$PYGTK_DIR:$PYTHONPATH
-
-dnl check for libglade
-AC_MSG_CHECKING(for gtk.glade)
-prog="
-import sys
-try:
-  import gtk.glade
-except RuntimeError:
-  sys.exit(0)
-except ImportError:
-  sys.exit(1)
-sys.exit(0)
-"
-
-if $PYTHON -c "$prog" 1>&AC_FD_CC 2>&AC_FD_CC
-then
-  AC_MSG_RESULT(found)
-else
-  AC_MSG_RESULT(not found)
-  AC_MSG_ERROR([You need to have python libglade bindings installed])
-fi
-
-dnl checks for gst-python
-PKG_CHECK_MODULES(PYGST, gst-python-0.10 >= $PYGST_010_REQ)
-PYGST_DIR="`$PKG_CONFIG --variable=pyexecdir gst-python-0.10`"
-AC_SUBST(PYGST_DIR)
-AC_MSG_NOTICE(Using gstreamer-python installed in $PYGST_DIR)
-
-export PYTHONPATH=$PYGST_DIR:$PYTHONPATH
-AS_PYTHON_IMPORT([gst],,
-                 AC_MSG_ERROR([Maybe you forgot to set your PYTHONPATH?]))
-
-AS_PYTHON_IMPORT([gst, gst.interfaces],,
-                 AC_MSG_ERROR([You need to recompile gst-python with gst.interfaces support]))
 
 dnl check for epydoc
 AC_CHECK_PROG(EPYDOC, epydoc, yes, no)

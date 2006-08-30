@@ -9,11 +9,14 @@ URL:            http://www.fluendo.com/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Requires:	flumotion > 0.1.9
+Requires:	flumotion >= 0.3.0
 
 BuildRequires:	gettext
 BuildRequires:	python >= 2.3
-#BuildRequires:	epydoc
+BuildRequires:	python-twisted
+BuildRequires:	flumotion >= 0.3.0
+BuildRequires:	epydoc
+BuildRequires:  pkgconfig
 BuildArch:	noarch
 
 %description
@@ -40,7 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 # %files -f flumotion-windowsmedia.lang
 %files
 %defattr(-,root,root,-)
-%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion LICENSE.GPL
+%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
 %{_libdir}/flumotion
 
 %changelog
