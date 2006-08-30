@@ -1,3 +1,9 @@
+2006-08-30  Julien MOUTTE  <julien@moutte.net>
+
+	* flumotion/component/muxers/asf/asf.py:
+	* flumotion/component/muxers/asf/asf.xml: Add preroll-time
+	property on the ASF muxer component.
+
 2006-05-30  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* configure.ac:

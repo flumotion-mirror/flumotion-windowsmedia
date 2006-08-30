@@ -14,6 +14,7 @@
       </entries>
 
       <properties>
+        <property name="preroll-time" type="int" />
       </properties>
 
     </component>
