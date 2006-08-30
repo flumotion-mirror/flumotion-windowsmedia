@@ -1,3 +1,9 @@
+=== release 0.3.0 ===
+
+2006-08-30  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* release 0.3.0
+
 2006-08-30  Julien MOUTTE  <julien@moutte.net>
 
 	* flumotion/component/muxers/asf/asf.py:

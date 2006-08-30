@@ -1,6 +1,6 @@
 AC_INIT(README)
 
-AS_VERSION(flumotion-windowsmedia, FW, 0, 0, 0, 1)
+AS_VERSION(flumotion-windowsmedia, FW, 0, 3, 0, 0)
 AC_SUBST(RELEASE, $FW_RELEASE)
 
 AC_SUBST_FILE(AUTHORS)
