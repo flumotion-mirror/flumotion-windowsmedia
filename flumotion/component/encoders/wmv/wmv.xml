@@ -15,6 +15,7 @@
 
       <properties>
         <property name="bitrate" type="int" />
+        <property name="version" type="int" />
       </properties>
 
     </component>

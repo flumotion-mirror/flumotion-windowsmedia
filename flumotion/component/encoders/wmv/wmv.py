@@ -16,7 +16,11 @@ from flumotion.component import feedcomponent
 
 class WMVEncoder(feedcomponent.ParseLaunchComponent):
     def get_pipeline_string(self, properties):
-        return "ffmpegcolorspace ! dmoenc_wmvdmoe2v3 name=encoder"
+        wmv_encoder = 'dmoenc_wmvdmoe2v3'
+        if properties.has_key('version'):
+            if properties['version'] == 2:
+                wmv_encoder = 'dmoenc_wmvdmoe2v2'
+        return "ffmpegcolorspace ! %s name=encoder" % wmv_encoder
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')

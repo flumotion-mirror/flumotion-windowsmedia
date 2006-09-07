@@ -1,3 +1,11 @@
+2006-09-07  Zaheer Abbas Merali  <zaheerabbas at merali dot org>
+
+	* flumotion/component/encoders/wmv/wmv.py:
+	* flumotion/component/encoders/wmv/wmv.xml:
+	Add an option to specify the version number of wmv.  Value 2
+	means use wmv2 (aka wmv8), anything else means use wmv3 
+	(aka wmv9).
+
 === release 0.3.0 ===
 
 2006-08-30  Thomas Vander Stichele  <thomas at apestaart dot org>
