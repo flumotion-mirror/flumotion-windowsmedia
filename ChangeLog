@@ -1,3 +1,8 @@
+2006-11-10  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/muxers/asf/asf.py:
+	  Update ASF muxer to use new muxer class, to avoid deadlockiness.
+
 2006-09-07  Zaheer Abbas Merali  <zaheerabbas at merali dot org>
 
 	* flumotion/component/encoders/wmv/wmv.py:
