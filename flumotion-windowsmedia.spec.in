@@ -17,7 +17,6 @@ BuildRequires:	python-twisted
 BuildRequires:	flumotion >= 0.3.0
 BuildRequires:	epydoc
 BuildRequires:  pkgconfig
-BuildArch:	noarch
 
 %description
 Flumotion Windows Media Streaming support.

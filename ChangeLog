@@ -1,3 +1,7 @@
+2007-01-05  Julien MOUTTE  <julien@moutte.net>
+
+	* flumotion-windowsmedia.spec.in: Remove noarch from spec.
+
 2006-11-10  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/muxers/asf/asf.py:
