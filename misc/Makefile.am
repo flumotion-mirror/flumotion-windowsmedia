@@ -4,7 +4,11 @@ noinst_PYTHON = setup.py
 
 EXTRA_DIST = pycheckerhelp.py preamble.py
 
-CLEANFILES = setup.py
+setup.py: $(top_builddir)/config.status
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+
+BUILT_SOURCES=setup.py
 
 clean-local:
+	rm -f $(BUILT_SOURCES)
 	rm -rf *.pyc *.pyo

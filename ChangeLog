@@ -1,3 +1,9 @@
+2007-02-07  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/test/Makefile.am:
+	* misc/Makefile.am:
+	  Again, autotoolery to make setup.py work properly.
+
 === release 0.3.1 ===
 
 2007-01-05  Julien MOUTTE  <julien@moutte.net>
