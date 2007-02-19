@@ -1,0 +1,31 @@
+<registry>
+  <components>
+    <component type="windows-media-server-producer"
+               base="flumotion/component/producers">
+      <source location="flumotion.component.producers.wms"/>
+
+      <entries>
+        <entry type="component" location="wms.py"
+               function="WindowsMediaServer"/>
+      </entries>
+    </component>
+  </components>
+
+  <bundles>
+
+    <bundle name="windows-media-server-producer-component">
+        <dependencies>
+            <dependency name="component" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/producers">
+                <filename location="__init__.py" />
+                <filename location="wmeslave.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+
+</registry> 

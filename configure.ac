@@ -89,6 +89,7 @@ flumotion/component/encoders/wmv/Makefile
 flumotion/component/encoders/wma/Makefile
 flumotion/component/muxers/Makefile
 flumotion/component/muxers/asf/Makefile
+flumotion/component/producers/Makefile
 flumotion/project/Makefile
 flumotion/project/windowsmedia.py
 flumotion-windowsmedia.spec
