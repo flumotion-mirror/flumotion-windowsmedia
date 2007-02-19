@@ -39,7 +39,7 @@ class DigestAuth(log.Loggable):
     def addUser(self, username, password):
         self._users[username] = password
 
-    # Taken from porter.py; replace later.
+    # TODO: Taken from porter.py; replace later.
     def _generateRandomString(self, numchars):
         """
         Generate a random US-ASCII string of length numchars
@@ -71,7 +71,7 @@ class DigestAuth(log.Loggable):
                   'qop':    (False, self._qop_type),
                   'nonce':  (True, nonce),
                   'opaque': (True, opaque),
-                  #'algorithm': (False, self._algorithm)
+                  'algorithm': (False, self._algorithm)
                  }
         if stale:
             params['stale'] = (False, 'true')
@@ -91,8 +91,6 @@ class DigestAuth(log.Loggable):
         try:
             type, data = authHeader.split(" ", 1)
             attrs = {}
-            # TODO: rewrite, this doesn't account for various things in the 
-            # quoted strings
             def unquote(v):
                 if v[0] == '"' and v[-1] == '"':
                     return v[1:-1]
@@ -161,14 +159,13 @@ class DigestAuth(log.Loggable):
         return m.digest().encode('hex')
 
     def authenticate(self, request):
+        """
+        Attempt to authenticate a request.
+        Returns an HTTP response code (which should be set on the response)
+        """
         if not hasHeader(request, "Authorization"):
-            #request.setHeader("WWW-Authenticate", 
-            #    self._generateWWWAuthenticateHeader(request))
-            request.headers["WWW-Authenticate"] = \
-                self._generateWWWAuthenticateHeader(request)
-            request.setResponseCode(http.UNAUTHORIZED)
             self.debug("No auth header, sending unauthorized")
-            return False
+            return http.UNAUTHORIZED
 
         self.debug("Has auth header, parsing")
 
@@ -176,25 +173,22 @@ class DigestAuth(log.Loggable):
         type, attrs = self._parseAuthHeader(authHeader)
         if type.lower() != 'digest':
             self.debug("Not digest auth, bad request")
-            request.setResponseCode(http.BAD_REQUEST)
-            return False
+            return http.BAD_REQUEST
 
         self.debug("Received attributes: %r", attrs)
         required = ['username', 'realm', 'nonce', 'opaque', 'uri', 'response']
-#                    'algorithm']
         for r in required:
             if r not in attrs:
                 self.debug("Required attribute %s is missing", r)
-                request.setResponseCode(http.BAD_REQUEST)
-                return False
-        # 'qop' is optional, if sent then cnonce and nc-value are required.
+                return http.BAD_REQUEST
+
+        # 'qop' is optional, if sent then cnonce and nc are required.
         qop = False
         if 'qop' in attrs:
             if attrs['qop'] != 'auth' or 'cnonce' not in attrs or \
                     'nc' not in attrs:
                 self.debug("qop is not auth or cnonce missing or nc missing")
-                request.setResponseCode(http.BAD_REQUEST)
-                return False
+                return http.BAD_REQUEST
             qop = True
             nccount = attrs['nc']
             cnonce = attrs['cnonce']
@@ -202,21 +196,13 @@ class DigestAuth(log.Loggable):
             # This is also required for md5-sess
             if self._algorithm == 'md5-sess':
                 if 'cnonce' not in attrs:
-                    self.debug("qop not set, but using md5-sess, so cnonce is "
-                        "required, but is missing")
-                    request.setResponseCode(http.BAD_REQUEST)
-                    return False
+                    self.debug("cnonce not present when md5-sess in use")
+                    return http.BAD_REQUEST
             nccount = None
             cnonce = None
             
-        # WM Encoder sends realm="", so this doesn't match. So, ignore it.
-        # TODO: Figure out whether it computes the response using this realm
-        # (the empty string) or the actual realm.
+        # WM Encoder sends realm="", so this doesn't match. So, skip this check
         #if attrs['realm'] != self._realm:
-        #    request.setResponseCode(http.BAD_REQUEST)
-        #    return False
-
-        #if attrs['algorithm'] != self._algorithm:
         #    request.setResponseCode(http.BAD_REQUEST)
         #    return False
 
@@ -230,40 +216,31 @@ class DigestAuth(log.Loggable):
 
         if username not in self._users:
             self.debug("Username not found in users db")
-            request.setResponseCode(http.UNAUTHORIZED)
-            request.headers["WWW-Authenticate"] = \
-                self._generateWWWAuthenticateHeader(request)
-            return False
+            return http.UNAUTHORIZED
 
         password = self._users[username]
 
         if opaque not in self._outstanding:
             self.debug("opaque not in outstanding")
-            request.setResponseCode(http.UNAUTHORIZED)
-            request.headers["WWW-Authenticate"] = \
-                self._generateWWWAuthenticateHeader(request)
-            return False
+            return http.UNAUTHORIZED
         (expectednonce, ts) = self._outstanding[opaque]
         if expectednonce != nonce:
             self.debug("nonce doesn't correspond to opaque")
-            request.setResponseCode(http.BAD_REQUEST)
-            return False
+            return http.BAD_REQUEST
         # TODO: expire entries based on ts?
 
         expected = self._calculateRequestDigest(realm, nonce, qop, nccount, 
             cnonce, username, password, request.method, uri)
         response = attrs['response']
 
-        self.debug("Computed expexted digest %s, received %s", expected, response)
+        self.debug("Computed expected digest %s, received %s", expected, 
+            response)
         if response != expected:
-            self.debug("Bad password")
-            request.setResponseCode(http.UNAUTHORIZED)
-            request.headers["WWW-Authenticate"] = \
-                self._generateWWWAuthenticateHeader(request)
-            return False
+            self.debug("Password incorrect")
+            return http.UNAUTHORIZED
 
         # Success!
-        return True
+        return http.OK
 
 def hasHeader(request, header):
     return header.lower() in request.getAllHeaders()
@@ -272,23 +249,30 @@ class TestResource(resource.Resource, log.Loggable):
 
     def __init__(self, realm):
         resource.Resource.__init__(self)
-        self.isLeaf = True
+        self.isLeaf = True # Don't look any deeper
+
         self._digester = DigestAuth(realm)
         self._digester.addUser("user", "test")
 
     def render_POST(self, request):
-        # TODO: ok,let's ignore authentication for the moment...
-        #if not hasattr(request.channel, "_hack_authenticated"):
-        if True:
-            self.debug("Trying authentication")
-            if not self._digester.authenticate(request):
-                request.setHeader("Supported", 
-                    "com.microsoft.wm.srvppair, com.microsoft.wm.sswitch, " \
-                    "com.microsoft.wm.predstrm, com.microsoft.wm.fastcache, " \
-                    "com.microsoft.wm.startupprofile")
-                request.setHeader("Server", "Cougar/9.01.01.3814")
-                return ""
-        #request.channel._hack_authenticated = True
+        request.setHeader("Supported", 
+            "com.microsoft.wm.srvppair, com.microsoft.wm.sswitch, " \
+            "com.microsoft.wm.predstrm, com.microsoft.wm.fastcache, " \
+            "com.microsoft.wm.startupprofile")
+        request.setHeader("Server", "Cougar/9.01.01.3814")
+
+        self.debug("Trying authentication")
+        code = self._digester.authenticate(request):
+
+        if code >= 400:
+            self.debug("Authentication failed")
+            request.setResponseCode(code)
+            if code == 401:
+                # TODO: This nasty hack is needed because setHeader() mangles
+                # case, which WMEncoder doesn't cope with
+                request.headers["WWW-Authenticate"] = \
+                    self._generateWWWAuthenticateHeader(request)
+            return ""
 
         pushId = 0
         if hasHeader(request, "Cookie"):
@@ -303,15 +287,11 @@ class TestResource(resource.Resource, log.Loggable):
         if ctype == 'application/x-wms-pushsetup':
             if pushId:
                 request.headers["Set-Cookie"] = "push-id=%d" % pushId
-            request.setHeader("Supported", 
-                "com.microsoft.wm.srvppair, com.microsoft.wm.sswitch, " \
-                "com.microsoft.wm.predstrm, com.microsoft.wm.fastcache, " \
-                "com.microsoft.wm.startupprofile")
-            request.setHeader("Server", "Cougar/9.01.01.3814")
             request.setResponseCode(http.NO_CONTENT)
             return ""
         elif ctype == 'application/x-wms-pushstart':
             self.debug("Got pushstart!")
+            # Need to make this work: TODO!
             request.content = open("/tmp/out.dump", "w")
             return ""
         else:
@@ -325,6 +305,7 @@ class WindowsMediaServer(component.BaseComponent):
     """
 
     def do_start(self, *args, **kwargs):
+        # TODO: Write a real component!
         resource = TestResource("Flumotion Streaming Server WMS Component")
         reactor.listenTCP(8888, server.Site(resource=resource))
 
