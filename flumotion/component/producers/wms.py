@@ -61,14 +61,18 @@ class WMSParser(log.Loggable):
                         (ord(self._header[3]) << 8) | \
                         (ord(self._header[2]))
                     self.debug("Packet is %d bytes long", self._packet_remaining)
+                    self.packet = ""
                 offset += c
             else:
                 c = min(rem, self._packet_remaining)
-                self._dumpfile.write(data[offset:offset+c])
+                self.packet += data[offset:offset+c]
                 self._packet_remaining -= c
                 offset += c
 
                 if self._packet_remaining == 0:
+                    if self._header[1] == 'D':
+                        self.packet += "\0\0" # WTF?
+                    self._dumpfile.write(self.packet)
                     self._header = ""
                     self._header_remaining = 4
 
