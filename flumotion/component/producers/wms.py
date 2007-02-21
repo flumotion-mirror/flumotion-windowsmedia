@@ -23,6 +23,8 @@ from twisted.web import resource, server, http
 from flumotion.component import component
 from flumotion.common import log
 
+from flumotion.component.producers import asfparse
+
 class WMSParser(log.Loggable):
     def __init__(self):
         self._dumpfile = open("/tmp/dump.asf", "w")
@@ -30,6 +32,8 @@ class WMSParser(log.Loggable):
         self._packet_remaining = 0 
         self._header_remaining = 4
         self._header = ""
+
+        self._asfparser = asfparse.ASFMicroParser()
 
     def dataReceived(self, data):
         self._rawdumpfile.write(data)
@@ -70,9 +74,19 @@ class WMSParser(log.Loggable):
                 offset += c
 
                 if self._packet_remaining == 0:
-                    if self._header[1] == 'D':
-                        self.packet += "\0\0" # WTF?
+                    if self._header[1] == 'H':
+                        self._asfparser.parseHeader(self.packet)
+
                     self._dumpfile.write(self.packet)
+                    # The stream from WM Encoder has the wrong packet length
+                    # set, we need to pad here...
+                    if self._header[1] == 'D':
+                        pad = self._asfparser.getRequiredPacketLength() - \
+                            len(self.packet)
+                        if pad < 0:
+                            self.warning("Packet too long!")
+                        elif pad > 0:
+                            self._dumpfile.write(pad * '\0')
                     self._header = ""
                     self._header_remaining = 4
 

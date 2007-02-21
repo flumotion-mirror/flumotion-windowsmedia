@@ -1,3 +1,9 @@
+2007-02-21  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	* flumotion/component/producers/wms.py:
+	  Commit asf parser (not tested yet).
+
 2007-02-20  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms.py:
