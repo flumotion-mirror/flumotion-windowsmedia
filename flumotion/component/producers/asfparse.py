@@ -90,9 +90,9 @@ class ASFMicroParser(log.Loggable):
                 self._parseFilePropertiesObject(buf, offset, length)
             offset = offset + length
 
-    def getRequiredPacketLength(self, packet):
+    def getRequiredPacketPadding(self, packet):
         if self.min_pkt_len == self.max_pkt_len:
-            return self.min_pkt_len
+            return self.min_pkt_len - len(packet)
         else:
             # TODO
             return -1

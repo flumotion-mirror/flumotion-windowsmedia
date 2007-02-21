@@ -81,8 +81,10 @@ class WMSParser(log.Loggable):
                     # The stream from WM Encoder has the wrong packet length
                     # set, we need to pad here...
                     if self._header[1] == 'D':
-                        pad = self._asfparser.getRequiredPacketLength() - \
-                            len(self.packet)
+                        # TODO: make this fix up the padding in each data 
+                        # packet header?
+                        pad = self._asfparser.getRequiredPacketPadding(
+                            self.packet)
                         if pad < 0:
                             self.warning("Packet too long!")
                         elif pad > 0:
