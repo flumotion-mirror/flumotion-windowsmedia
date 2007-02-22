@@ -20,77 +20,10 @@ import random
 from twisted.internet import reactor, defer
 from twisted.web import resource, server, http
 
-from flumotion.component import component
+from flumotion.component import feedcomponent
 from flumotion.common import log
 
 from flumotion.component.producers import asfparse
-
-class WMSParser(log.Loggable):
-    def __init__(self):
-        self._dumpfile = open("/tmp/dump.asf", "w")
-        self._rawdumpfile = open("/tmp/dump.raw", "w")
-        self._packet_remaining = 0 
-        self._header_remaining = 4
-        self._header = ""
-
-        self._asfparser = asfparse.ASFMicroParser()
-
-    def dataReceived(self, data):
-        self._rawdumpfile.write(data)
-        length = len(data)
-        offset = 0
-        self.debug("Received %d byte buffer", length)
-        while offset < length:
-            rem = length - offset
-            if self._header_remaining:
-                c = min(rem, self._header_remaining)
-                self._header += data[offset:offset+c]
-                self._header_remaining -= c
-
-                if self._header_remaining == 0:
-                    self.debug("Header received, now parsing")
-                    # Now parse the 4-byte header...
-                    if self._header[0] != '$':
-                        # TODO: try and recover somehow...
-                        self.warning("Synchronisation error")
-
-                    if self._header[1] == 'H':
-                        self.debug("Received header packet")
-                    elif self._header[1] == 'D':
-                        self.debug("Received data packet")
-                    else:
-                        self.warning("Unknown packet type: %s", self._header[1])
-
-                    self._packet_remaining = \
-                        (ord(self._header[3]) << 8) | \
-                        (ord(self._header[2]))
-                    self.debug("Packet is %d bytes long", self._packet_remaining)
-                    self.packet = ""
-                offset += c
-            else:
-                c = min(rem, self._packet_remaining)
-                self.packet += data[offset:offset+c]
-                self._packet_remaining -= c
-                offset += c
-
-                if self._packet_remaining == 0:
-                    if self._header[1] == 'H':
-                        self._asfparser.parseHeader(self.packet)
-
-                    self._dumpfile.write(self.packet)
-                    # The stream from WM Encoder has the wrong packet length
-                    # set, we need to pad here...
-                    if self._header[1] == 'D':
-                        # TODO: make this fix up the padding in each data 
-                        # packet header?
-                        pad = self._asfparser.getRequiredPacketPadding(
-                            self.packet)
-                        if pad < 0:
-                            self.warning("Packet too long!")
-                        elif pad > 0:
-                            self._dumpfile.write(pad * '\0')
-                    self._header = ""
-                    self._header_remaining = 4
 
 class DigestAuth(log.Loggable):
     logCategory = "digestauth"
@@ -319,7 +252,6 @@ class WMSRequest(server.Request, log.Loggable):
         server.Request.__init__(self, *args, **kw)
 
         self._streaming = False
-        self._wmsparser = None
 
     def hasHeader(self, header):
         return header.lower() in self.received_headers
@@ -386,7 +318,6 @@ class WMSRequest(server.Request, log.Loggable):
             return
         elif ctype == 'application/x-wms-pushstart':
             self.debug("Got pushstart!")
-            self._wmsparser = WMSParser()
             self.finish()
             return
         else:
@@ -395,11 +326,11 @@ class WMSRequest(server.Request, log.Loggable):
             return
 
     def dataReceived(self, data):
-        if not self._wmsparser:
+        if not self.channel.wmsfactory.srcelement:
             self.warning("Receiving streaming data without a pushstart request")
             return
 
-        self._wmsparser.dataReceived(data)
+        self.channel.wmsfactory.srcelement.dataReceived(data)
 
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
@@ -427,10 +358,11 @@ class WMSFactory(http.HTTPFactory):
     protocol = WMSChannel
     requestFactory = WMSRequest
 
-    def __init__(self, auth):
+    def __init__(self, auth, srcelement):
         http.HTTPFactory.__init__(self)
 
         self.digester = auth
+        self.srcelement = srcelement
 
     def buildProtocol(self, addr):
         channel = http.HTTPFactory.buildProtocol(self, addr)
@@ -438,17 +370,33 @@ class WMSFactory(http.HTTPFactory):
         channel.wmsfactory = self
         return channel
 
-class WindowsMediaServer(component.BaseComponent):
+class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     """
     A component to act (to a Windows Media Encoder client in push mode) like
     a Windows Media Server, in order to accept an ASF stream.
     """
 
+    def init(self):
+        # TODO: Add code to ensure that multiple connections simultaneously
+        # don't try to use this thing.
+        self._srcelement = asfparse.ASFSrc()
+
     def do_start(self, *args, **kwargs):
         # TODO: Write a real component!
         digester = DigestAuth("Flumotion Streaming Server WMS Component")
         digester.addUser("user", "test")
-        reactor.listenTCP(8888, WMSFactory(digester))
+        reactor.listenTCP(8888, WMSFactory(digester, self._srcelement))
 
         return defer.succeed(None)
+
+    def get_pipeline_string(self, properties):
+        return "identity name=identity"
+
+    def configure_pipeline(self, pipeline, properties):
+        src = pipeline.get_by_name_name("identity")
+
+        srcpad = self._srcelement.get_pad("src")
+        sinkpad = src.get_pad("sink")
+
+        srcpad.link(sinkpad)
 
