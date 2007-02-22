@@ -1,6 +1,12 @@
 2007-02-22  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
+	  Rewrite buffer handling, set timestamps, durations, and appropriate
+	  flags (but those come from a stubbed-out method for the moment)
+
+2007-02-22  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
 	  Move to BaseSrc, as PushSrc.do_create() isn't wrapped properly.
 	  Fix up return values from do_create()
 	  Stop dumping to file.

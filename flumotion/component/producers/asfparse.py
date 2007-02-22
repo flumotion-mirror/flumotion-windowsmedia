@@ -46,7 +46,7 @@ class ASFHTTPParser(log.Loggable):
         self._bytes_remaining = self.HEADER_BYTES
         self._packet = ""
         self._packet_type = None
-        self._asfpackets = []
+        self._asfbuffers = []
         self._caps = None
 
         self._asf_min_pkt_len = 0
@@ -98,14 +98,14 @@ class ASFHTTPParser(log.Loggable):
             self._asf_max_pkt_len)
         return True
 
-    def _parseHeaderPacket(self, buf):
+    def _getHeaderBuffer(self, buf):
         (type, offset, headersLength) = self._readObject(buf, 0)
         if type != GUID.ASF_HEADER_OBJECT:
             self.warning("Header object does not contain header")
-            return False
+            return None
         if headersLength < 6:
             self.warning("ASF Header too short to read")
-            return False
+            return None
 
         numHeaders = self._readUInt32(buf, offset)
         offset += 6
@@ -116,10 +116,13 @@ class ASFHTTPParser(log.Loggable):
             if guid == GUID.ASF_HEADER_FILE_PROPERTIES_OBJECT:
                 if not self._parseFilePropertiesObject(buf, offset, length):
                     self.warning("Failed to parse file properties")
-                    return False
+                    return None
             offset = offset + length
 
         headerBuf = gst.Buffer(buf)
+        headerBuf.timestamp = gst.CLOCK_TIME_NONE
+        headerBuf.duration = gst.CLOCK_TIME_NONE
+        headerBuf.flag_set(gst.BUFFER_FLAG_IN_CAPS)
             
         self._caps = gst.caps_from_string("video/x-ms-asf")
         # streamheader needs to be a GST_TYPE_ARRAY, which is represented
@@ -129,26 +132,38 @@ class ASFHTTPParser(log.Loggable):
         except:
             return False
 
-        return True
+        headerBuf.caps = self._caps
 
-    def _getPacketLength(self, packet):
+        return headerBuf
+
+    def _parseDataPacket(self, packet):
         if self._asf_min_pkt_len == self._asf_max_pkt_len:
-            return self._asf_min_pkt_len
+            len = self._asf_min_pkt_len
         else:
             # TODO
-            return -1
+            len = -1
 
-    def _fixupDataPacket(self, buf):
-        packetLen = self._getPacketLength(buf)
-        self.debug("packet length %d, required to be %d", len(buf), packetLen)
-        if len(buf) < packetLen:
-            pad = '\0' * (packetLen - len(buf))
-            return buf + pad
-        else:
-            return buf
+        return (len, -1, -1, True)
 
-    def _getDataPacketTimestamp(self, data):
-        return -1 # TODO: Implement me!
+    def _getDataBuffer(self, data):
+        (packetLen, timestamp, duration, isKeyframe) = \
+            self._parseDataPacket(data)
+
+        # Some of these require padding to be added here.
+        self.debug("packet length %d, required to be %d", len(data), packetLen)
+        if len(data) < packetLen:
+            pad = '\0' * (packetLen - len(data))
+            data = data + pad
+
+        buf = gst.Buffer(data)
+        buf.caps = self._caps
+
+        buf.timestamp = timestamp
+        buf.duration = duration
+        if not isKeyframe:
+            buf.flag_set(gst.BUFFER_FLAG_DELTA_UNIT)
+
+        return buf
 
     def parseData(self, data):
         length = len(data)
@@ -185,29 +200,24 @@ class ASFHTTPParser(log.Loggable):
                     if self._packet_type == self.PACKET_HEADER:
                         self.debug("Received ASF header, length %d", 
                             len(self._packet))
-                        self._parseHeaderPacket(self._packet)
-                        self._asfpackets.append(self._packet)
+                        buf = self._getHeaderBuffer(self._packet)
+                        self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_DATA:
                         self.debug("Received ASF data, length %d", 
                             len(self._packet))
-                        packet = self._fixupDataPacket(self._packet)
-                        self._asfpackets.append(packet)
+                        buf = self._getDataBuffer(self._packet)
+                        self._asfbuffers.append(buf)
 
                     self._http_parser_state = self.STATE_HEADER
                     self._bytes_remaining = self.HEADER_BYTES
 
                 self._packet = ""
 
-    def hasPacket(self):
-        return len(self._asfpackets) != 0
+    def hasBuffer(self):
+        return len(self._asfbuffers) != 0
 
-    def getPacketAsBuffer(self):
-        data = self._asfpackets.pop(0)
-        buf = gst.Buffer(data)
-        buf.caps = self._caps
-        buf.timestamp = self._getDataPacketTimestamp(data)
-
-        return buf
+    def getBuffer(self):
+        return self._asfbuffers.pop(0)
 
 # Ideally we'd use PushSrc here, but the gst-python wrapping of that appears to
 # not work correctly. So this works fine...
@@ -244,8 +254,8 @@ class ASFSrc(gst.BaseSrc):
         """
         self.asfparser.parseData(data)
 
-        while self.asfparser.hasPacket():
-            buf = self.asfparser.getPacketAsBuffer()
+        while self.asfparser.hasBuffer():
+            buf = self.asfparser.getBuffer()
 
             self.queue.push(buf)
 
