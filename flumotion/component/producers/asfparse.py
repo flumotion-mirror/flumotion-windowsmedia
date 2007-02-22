@@ -96,6 +96,7 @@ class ASFHTTPParser(log.Loggable):
 
         self.debug("Min length: %d, Max %d", self._asf_min_pkt_len, 
             self._asf_max_pkt_len)
+        return True
 
     def _parseHeaderPacket(self, buf):
         (type, offset, headersLength) = self._readObject(buf, 0)
@@ -122,21 +123,29 @@ class ASFHTTPParser(log.Loggable):
             
         self._caps = gst.caps_from_string("video/x-ms-asf")
         # streamheader needs to be a GST_TYPE_ARRAY, which is represented
-        # as a tuple in python.
-        self._caps[0]['streamheader'] = (headerBuf,)
+        # as a tuple in python. Support for this added in gst-python 0.10.8
+        try:
+            self._caps[0]['streamheader'] = (headerBuf,)
+        except:
+            return False
+
+        return True
 
     def _getPacketLength(self, packet):
         if self._asf_min_pkt_len == self._asf_max_pkt_len:
-            return self._asf_min_pkt_len - len(packet)
+            return self._asf_min_pkt_len
         else:
             # TODO
             return -1
 
     def _fixupDataPacket(self, buf):
         packetLen = self._getPacketLength(buf)
+        self.debug("packet length %d, required to be %d", len(buf), packetLen)
         if len(buf) < packetLen:
             pad = '\0' * (packetLen - len(buf))
-        return buf + pad
+            return buf + pad
+        else:
+            return buf
 
     def _getDataPacketTimestamp(self, data):
         return -1 # TODO: Implement me!
@@ -163,7 +172,7 @@ class ASFHTTPParser(log.Loggable):
                     if self._packet[1] == 'H':
                         self.debug("Header packet header received")
                         self._packet_type = self.PACKET_HEADER
-                    if self._packet[1] == 'D':
+                    elif self._packet[1] == 'D':
                         self.debug("Data packet header received")
                         self._packet_type = self.PACKET_DATA
                     else:
@@ -174,9 +183,13 @@ class ASFHTTPParser(log.Loggable):
                                              (ord(self._packet[2])))
                 else:
                     if self._packet_type == self.PACKET_HEADER:
+                        self.debug("Received ASF header, length %d", 
+                            len(self._packet))
                         self._parseHeaderPacket(self._packet)
                         self._asfpackets.append(self._packet)
                     elif self._packet_type == self.PACKET_DATA:
+                        self.debug("Received ASF data, length %d", 
+                            len(self._packet))
                         packet = self._fixupDataPacket(self._packet)
                         self._asfpackets.append(packet)
 
@@ -205,10 +218,14 @@ class ASFSrc(gst.PushSrc):
         )
 
     def __init__(self, name):
-        gst.PushSrc.__init__(self, name)
+        gst.PushSrc.__init__(self)
+        self.set_name(name)
 
         self.queue = queue.AsyncQueue()
         self.asfparser = ASFHTTPParser()
+
+        self._df1 = open("/tmp/dump1.asf", "w")
+        self._df2 = open("/tmp/dump2.asf", "w")
 
     def do_unlock(self):
         self.queue.unblock()
@@ -216,6 +233,7 @@ class ASFSrc(gst.PushSrc):
     def do_create(self):
         try:
             buf = self.queue.pop()
+            self._df2.write(buf.data)
         except queue.InterruptedException:
             return None
 
@@ -230,6 +248,7 @@ class ASFSrc(gst.PushSrc):
 
         while self.asfparser.hasPacket():
             buf = self.asfparser.getPacketAsBuffer()
+            self._df1.write(buf.data)
 
             self.queue.push(buf)
 

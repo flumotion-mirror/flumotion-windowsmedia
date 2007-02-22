@@ -3,6 +3,7 @@
     <component type="windows-media-server-producer"
                base="flumotion/component/producers">
       <source location="flumotion.component.producers.wms"/>
+      <feeder name="default"/>
 
       <entries>
         <entry type="component" location="wms.py"

@@ -379,7 +379,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     def init(self):
         # TODO: Add code to ensure that multiple connections simultaneously
         # don't try to use this thing.
-        self._srcelement = asfparse.ASFSrc()
+        self._srcelement = asfparse.ASFSrc("asfsrc")
 
     def do_start(self, *args, **kwargs):
         # TODO: Write a real component!
@@ -393,7 +393,9 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         return "identity name=identity"
 
     def configure_pipeline(self, pipeline, properties):
-        src = pipeline.get_by_name_name("identity")
+        pipeline.add(self._srcelement)
+
+        src = pipeline.get_by_name("identity")
 
         srcpad = self._srcelement.get_pad("src")
         sinkpad = src.get_pad("sink")
