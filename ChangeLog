@@ -1,6 +1,18 @@
 2007-02-22  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
+	  Move to BaseSrc, as PushSrc.do_create() isn't wrapped properly.
+	  Fix up return values from do_create()
+	  Stop dumping to file.
+	* flumotion/component/producers/wms.py:
+	  Chain up to ParseLaunchComponent.do_start(), so that the pipeline
+	  gets started.
+	* flumotion/component/producers/wms.xml:
+	  Fix up bundling information
+
+2007-02-22  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
 	* flumotion/component/producers/wms.py:
 	* flumotion/component/producers/wms.xml:
 	  Cleanup for previous changes so it now works as well as previously

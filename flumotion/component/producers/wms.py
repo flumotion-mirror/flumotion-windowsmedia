@@ -387,7 +387,8 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         digester.addUser("user", "test")
         reactor.listenTCP(8888, WMSFactory(digester, self._srcelement))
 
-        return defer.succeed(None)
+        return feedcomponent.ParseLaunchComponent.do_start(self, *args, 
+            **kwargs)
 
     def get_pipeline_string(self, properties):
         return "identity name=identity"

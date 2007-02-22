@@ -209,7 +209,9 @@ class ASFHTTPParser(log.Loggable):
 
         return buf
 
-class ASFSrc(gst.PushSrc):
+# Ideally we'd use PushSrc here, but the gst-python wrapping of that appears to
+# not work correctly. So this works fine...
+class ASFSrc(gst.BaseSrc):
     __gsttemplates__ = (
         gst.PadTemplate("src",
                         gst.PAD_SRC,
@@ -218,26 +220,22 @@ class ASFSrc(gst.PushSrc):
         )
 
     def __init__(self, name):
-        gst.PushSrc.__init__(self)
+        gst.BaseSrc.__init__(self)
         self.set_name(name)
 
         self.queue = queue.AsyncQueue()
         self.asfparser = ASFHTTPParser()
 
-        self._df1 = open("/tmp/dump1.asf", "w")
-        self._df2 = open("/tmp/dump2.asf", "w")
-
     def do_unlock(self):
         self.queue.unblock()
 
-    def do_create(self):
+    def do_create(self, offset, size):
         try:
             buf = self.queue.pop()
-            self._df2.write(buf.data)
         except queue.InterruptedException:
-            return None
+            return (gst.FLOW_WRONG_STATE, None)
 
-        return buf
+        return (gst.FLOW_OK, buf)
 
     def dataReceived(self, data):
         """
@@ -248,11 +246,8 @@ class ASFSrc(gst.PushSrc):
 
         while self.asfparser.hasPacket():
             buf = self.asfparser.getPacketAsBuffer()
-            self._df1.write(buf.data)
 
             self.queue.push(buf)
 
 gobject.type_register(ASFSrc)
 
-
-    
