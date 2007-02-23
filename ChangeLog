@@ -1,3 +1,11 @@
+2007-02-23  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Parse more of headers to find out whether the stream will contain
+	  keyframes.
+	  Parse data packet payload headers to see if this is a keyframe.
+	  Use timestamps, duration, and delta-unit flags on buffers.
+
 2007-02-22  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
