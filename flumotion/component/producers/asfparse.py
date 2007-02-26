@@ -405,7 +405,18 @@ class ASFSrc(gst.BaseSrc):
         self.set_name(name)
 
         self.queue = queue.AsyncQueue()
-        self.asfparser = ASFHTTPParser()
+        self.asfparser = None
+
+        self.streaming = False
+
+    def setStreaming(self, streaming):
+        self.streaming = streaming
+        if self.streaming:
+            self.queue.clear()
+            self.asfparser = ASFHTTPParser()
+
+    def isStreaming(self):
+        return self.streaming
 
     def do_unlock(self):
         self.queue.unblock()

@@ -66,3 +66,12 @@ class AsyncQueue(object):
         self._cond.notifyAll()
         self._cond.release()
 
+    def clear(self):
+        """
+        Clear the queue, and unblock any blocked calls to pop()
+        """
+        self._cond.acquire()
+        self._cond.notifyAll()
+        self._queue = []
+        self._cond.release()
+

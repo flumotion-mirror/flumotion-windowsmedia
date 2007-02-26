@@ -268,6 +268,7 @@ class WMSRequest(server.Request, log.Loggable):
         server.Request.__init__(self, *args, **kw)
 
         self._streaming = False
+        self._srcelement = None
 
     def hasHeader(self, header):
         return header.lower() in self.received_headers
@@ -330,6 +331,12 @@ class WMSRequest(server.Request, log.Loggable):
             return
         elif ctype == 'application/x-wms-pushstart':
             self.debug("Got pushstart!")
+            if self.channel.wmsfactory.srcelement.isStreaming():
+                self.warning("Already streaming")
+                self.finish()
+                return
+            self._srcelement = self.channel.wmsfactory.srcelement
+            self._srcelement.setStreaming(True)
             self.finish()
             return
         else:
@@ -338,11 +345,11 @@ class WMSRequest(server.Request, log.Loggable):
             return
 
     def dataReceived(self, data):
-        if not self.channel.wmsfactory.srcelement:
+        if not self._srcelement:
             self.warning("Receiving streaming data without a pushstart request")
             return
 
-        self.channel.wmsfactory.srcelement.dataReceived(data)
+        self._srcelement.dataReceived(data)
 
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
@@ -365,6 +372,10 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
         else:
             self.debug("Raw data received for non-streaming request")
             http.HTTPChannel.rawDataReceived(self, data)
+
+    def connectionLost(self, reason):
+        self.wmsfactory.srcelement.setStreaming(False)
+        return http.HTTPChannel.connectionLost(self, reason)
 
 class WMSFactory(http.HTTPFactory):
     protocol = WMSChannel
@@ -389,8 +400,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     """
 
     def init(self):
-        # TODO: Add code to ensure that multiple connections simultaneously
-        # don't try to use this thing.
         self._srcelement = asfparse.ASFSrc("asfsrc")
 
     def do_start(self, *args, **kwargs):
