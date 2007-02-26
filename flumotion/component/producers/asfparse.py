@@ -134,8 +134,8 @@ class ASFPacketParser(log.Loggable):
         multipay = lengthflags & 0x01
 
         packetlen = self.readLength((lengthflags & 0x06) >> 1)
-        sequencelen = self.readLength((lengthflags & 0x18) >> 3)
-        padlen = self.readLength((lengthflags & 0x60) >> 5)
+        #sequencelen = self.readLength((lengthflags & 0x18) >> 3)
+        #padlen = self.readLength((lengthflags & 0x60) >> 5)
 
         # Override for the fixed-size packet case or when packetlen invalid
         if self._asfinfo.min_pkt_len == self._asfinfo.max_pkt_len or \
@@ -157,19 +157,20 @@ class ASFPacketParser(log.Loggable):
 
     def readPayload(self, hasPayloadLength):
         streamNumberByte = self.readUInt8()
-        mediaobjectNumber = self.readLength(self._mediaobjectnumberlengthtype)
+        #mediaobjectNumber = self.readLength(self._mediaobjectnumberlengthtype)
         # For the compressed payload case, this is actually 'presentation time',
         # but we don't use it, nor verify its validity.
-        offsetintomediaobject = self.readLength(
-            self._offsetintomediaobjectlengthtype)
+        #offsetintomediaobject = self.readLength(
+        #    self._offsetintomediaobjectlengthtype)
         replicateddatalength = self.readLength(self._replicateddatalengthtype)
         if replicateddatalength == 1:
             # Special value meaning we have compressed payloads
-            prestimedelta = self.readUInt8()
+            #prestimedelta = self.readUInt8()
+            pass
         else:
             self._off += replicateddatalength # TODO: figure out what this is.
         
-        streamNumber = streamNumberByte & 0x7f
+        #streamNumber = streamNumberByte & 0x7f
         self.hasKeyframe = self.hasKeyframe or (streamNumberByte & 0x80)
         self.debug("Payload hasKeyframe: %r", self.hasKeyframe)
 
@@ -261,7 +262,7 @@ class ASFHTTPParser(log.Loggable):
             raise InvalidBitstreamException("Header extension object too short")
         self.debug("Parsing header extension object")
         end = offset + length
-        dataSize = _readUInt32(buf, offset + 18)
+        #dataSize = _readUInt32(buf, offset + 18)
         offset += 22
 
         while offset < end:

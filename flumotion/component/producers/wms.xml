@@ -9,6 +9,27 @@
         <entry type="component" location="wms.py"
                function="WindowsMediaServer"/>
       </entries>
+
+      <properties>
+        <property name="mount-point" type="string" 
+                  description="The mount point the stream is to be produced on"/>
+        <property name="type" type="string"
+                  description="'master' to listen on a port, or 'slave' to slave to a porter (default master)" />
+
+        <!-- If type is 'master' (default) -->
+        <property name="port" type="int"
+                  description="Port to listen on (if type is 'master')" />
+
+        <!-- If type is 'slave' -->
+        <property name="porter-socket-path" type="string"
+                  description="Path to the socket to communicate with the porter" />
+        <property name="porter-username" type="string"
+                  description="Username to authenticate with to the porter" />
+        <property name="porter-password" type="string"
+                  description="Password to authenticate with to the porter" />
+        
+
+      </properties>
     </component>
   </components>
 

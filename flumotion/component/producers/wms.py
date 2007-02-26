@@ -17,13 +17,21 @@ import time
 import md5
 import random
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, error
 from twisted.web import resource, server, http
+from twisted.cred import credentials
 
 from flumotion.component import feedcomponent
-from flumotion.common import log
+from flumotion.common import log, errors, messages
+
+from flumotion.twisted import fdserver
+from flumotion.component.misc.porter import porterclient
+from flumotion.component.component import moods
 
 from flumotion.component.producers import asfparse
+
+from flumotion.common.messages import N_
+T_ = messages.gettexter('flumotion-windowsmedia')
 
 class DigestAuth(log.Loggable):
     logCategory = "digestauth"
@@ -357,6 +365,7 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
         http.HTTPChannel.__init__(self)
 
         self._streaming_request = None
+        self.wmsfactory = None
 
     def rawDataReceived(self, data):
         # Windows Media Encoder sends this content-length. Use this as a trigger
@@ -402,17 +411,76 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     def init(self):
         self._srcelement = asfparse.ASFSrc("asfsrc")
 
+    def do_check(self):
+        props = self.config['properties']
+
+        if props.get('type', 'master') == 'slave':
+            for k in 'socket-path', 'username', 'password':
+                if not 'porter-' + k in props:
+                    msg = "slave mode, missing required property 'porter-%s'" % k
+                    return defer.fail(errors.ConfigError(msg))
+
     def do_start(self, *args, **kwargs):
         # TODO: Write a real component!
         digester = DigestAuth("Flumotion Streaming Server WMS Component")
         digester.addUser("user", "test3")
+
+        factory = WMSFactory(digester, self._srcelement)
+        if self.type == 'slave':
+            # Slaved to a porter...
+            d1 = feedcomponent.ParseLaunchComponent.do_start(self,
+                *args, **kwargs)
+
+            d2 = defer.Deferred()
+            mountpoints = [self.mountPoint]
+            self._pbclient = porterclient.HTTPPorterClientFactory(
+                factory, mountpoints, d2)
+
+            creds = credentials.UsernamePassword(self._porterUsername,
+                self._porterPassword)
+            self._pbclient.startLogin(creds, self.medium)
+
+            self.debug("Starting porter login at \"%s\"", self._porterPath)
+            # This will eventually cause d2 to fire
+            reactor.connectWith(
+                fdserver.FDConnector, self._porterPath,
+                self._pbclient, 10, checkPID=False)
+
+            return defer.DeferredList([d1, d2])
+        else:
+            # Streamer is standalone.
+            try:
+                self.debug('Listening on %d' % self.port)
+                reactor.listenTCP(self.port, factory)
+                return feedcomponent.ParseLaunchComponent.do_start(self, *args,
+                    **kwargs)
+            except error.CannotListenError:
+                t = 'Port %d is not available.' % self.port
+                self.warning(t)
+                m = messages.Error(T_(N_(
+                    "Network error: TCP port %d is not available."), self.port))
+                self.addMessage(m)
+                self.setMood(moods.sad)
+                return defer.fail(errors.ComponentStartHandledError(t))
+            
         reactor.listenTCP(8888, WMSFactory(digester, self._srcelement))
 
         return feedcomponent.ParseLaunchComponent.do_start(self, *args, 
             **kwargs)
 
+    def do_stop(self):
+        if self.type == 'slave' and self._pbclient:
+            d1 = self._pbclient.deregisterPath(self.mountPoint)
+            d2 = feedcomponent.ParseLaunchComponent.do_stop(self)
+            return defer.DeferredList([d1,d2])
+        else:
+            return feedcomponent.ParseLaunchComponent.do_stop(self)
+
     def get_pipeline_string(self, properties):
-        return "identity name=identity"
+        # We require an element by name for later adding our actual source 
+        # element (which isn't in the registry, so we can't use it here), and
+        # because returning an empty string here isn't allowed.
+        return "identity name=identity silent=true"
 
     def configure_pipeline(self, pipeline, properties):
         pipeline.add(self._srcelement)
@@ -423,4 +491,16 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         sinkpad = src.get_pad("sink")
 
         srcpad.link(sinkpad)
+
+        self.type = properties.get('type', 'master')
+        if self.type == 'slave':
+            self._porterPath = properties['porter-socket-path']
+            self._porterUsername = properties['porter-username']
+            self._porterPassword = properties['porter-password']
+        else:
+            self.port = int(properties.get('port', 8888))
+
+        self.mountPoint = properties.get('mount-point', '/')
+        if not self.mountPoint.startswith('/'):
+            self.mountPoint = '/' + self.mountPoint
 
