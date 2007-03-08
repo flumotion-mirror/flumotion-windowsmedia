@@ -15,6 +15,19 @@
 from flumotion.component import feedcomponent
 
 class WMVEncoder(feedcomponent.ParseLaunchComponent):
+    def do_check(self):
+        self.debug('running pitfdll check')
+        from flumotion.worker.checks import check
+        d = check.checkPlugin('pitfdll', 'gst-pitfdll')
+        def cb(result):
+            for m in result.messages:
+                self.addMessage(m)
+        d.addCallback(cb)
+        return d
+
+     def get_pipeline_string(self, properties):
+              return "audioconvert ! fluwmaenc name=encoder"
+
     def get_pipeline_string(self, properties):
         wmv_encoder = 'dmoenc_wmvdmoe2v3'
         if properties.has_key('version'):

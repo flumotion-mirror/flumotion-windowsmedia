@@ -15,6 +15,16 @@
 from flumotion.component import feedcomponent
 
 class WMAEncoder(feedcomponent.ParseLaunchComponent):
+    def do_check(self):
+        self.debug('running fluwmaenc check')
+        from flumotion.worker.checks import check
+        d = check.checkPlugin('fluwmaenc', 'gst-fluendo-wmaenc')
+        def cb(result):
+            for m in result.messages:
+                self.addMessage(m)
+        d.addCallback(cb)
+        return d
+
     def get_pipeline_string(self, properties):
         return "audioconvert ! fluwmaenc name=encoder"
 

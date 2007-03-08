@@ -17,6 +17,16 @@ import gst
 from flumotion.component import feedcomponent
 
 class ASFMuxer(feedcomponent.MultiInputParseLaunchComponent):
+    def do_check(self):
+        self.debug('running fluasfmux check')
+        from flumotion.worker.checks import check
+        d = check.checkPlugin('fluasfmux', 'gst-fluendo-asfmux')
+        def cb(result):
+            for m in result.messages:
+                self.addMessage(m)
+        d.addCallback(cb)
+        return d
+
     def get_muxer_string(self, properties):
         return 'fluasfmux broadcast=true name=muxer '
     
