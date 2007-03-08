@@ -9,12 +9,12 @@ URL:            http://www.fluendo.com/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Requires:	flumotion >= @FLUMOTION_REQ@
+Requires:	flumotion >= @FLU_REQ@
 
 BuildRequires:	gettext
 BuildRequires:	python >= 2.3
 BuildRequires:	python-twisted
-BuildRequires:	flumotion >= @FLUMOTION_REQ@
+BuildRequires:	flumotion >= @FLU_REQ@
 BuildRequires:	epydoc
 BuildRequires:  pkgconfig
 
