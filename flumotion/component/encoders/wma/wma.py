@@ -15,6 +15,9 @@
 from flumotion.component import feedcomponent
 
 class WMAEncoder(feedcomponent.ParseLaunchComponent):
+    checkTimestamp = True
+    checkOffset = True
+
     def do_check(self):
         self.debug('running fluwmaenc check')
         from flumotion.worker.checks import check

@@ -15,6 +15,9 @@
 from flumotion.component import feedcomponent
 
 class WMVEncoder(feedcomponent.ParseLaunchComponent):
+    checkTimestamp = True
+    checkOffset = True
+
     def do_check(self):
         self.debug('running pitfdll check')
         from flumotion.worker.checks import check
