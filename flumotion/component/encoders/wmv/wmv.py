@@ -28,8 +28,8 @@ class WMVEncoder(feedcomponent.ParseLaunchComponent):
         d.addCallback(cb)
         return d
 
-     def get_pipeline_string(self, properties):
-              return "audioconvert ! fluwmaenc name=encoder"
+    def get_pipeline_string(self, properties):
+        return "audioconvert ! fluwmaenc name=encoder"
 
     def get_pipeline_string(self, properties):
         wmv_encoder = 'dmoenc_wmvdmoe2v3'
