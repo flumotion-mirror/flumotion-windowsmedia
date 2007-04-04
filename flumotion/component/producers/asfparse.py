@@ -365,7 +365,7 @@ class ASFHTTPParser(log.Loggable):
                         # We don't parse the contents of this packet currently;
                         # I haven't even looked to see what it contains
                         self.debug("EOS packet received")
-                        return
+                        return False
                     else:
                         # We'll just skip over this one...
                         self.warning("Unknown packet type: %s", self._packet[1])
@@ -388,6 +388,7 @@ class ASFHTTPParser(log.Loggable):
                     self._bytes_remaining = self.HEADER_BYTES
 
                 self._packet = ""
+        return True
 
     def hasBuffer(self):
         return len(self._asfbuffers) != 0
