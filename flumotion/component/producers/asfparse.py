@@ -27,6 +27,8 @@ class GUID:
         "\x30\x26\xb2\x75\x8e\x66\xcf\x11\xa6\xd9\x00\xaa\x00\x62\xce\x6c"
     ASF_HEADER_FILE_PROPERTIES_OBJECT = \
         "\xa1\xdc\xab\x8c\x47\xa9\xcf\x11\x8e\xe4\x00\xc0\x0c\x20\x53\x65"
+    ASF_HEADER_STREAM_PROPERTIES_OBJECT = \
+        "\x91\x07\xdc\xb7\xb7\xa9\xcf\x11\x8e\xe6\x00\xc0\x0c\x20\x53\x65"
     ASF_HEADER_EXTENSION_OBJECT = \
         "\xb5\x03\xbf\x5f\x2e\xa9\xcf\x11\x8e\xe3\x00\xc0\x0c\x20\x53\x65"
     ASF_EXTENDED_STREAM_PROPERTIES_OBJECT = \
@@ -134,7 +136,7 @@ class ASFPacketParser(log.Loggable):
         multipay = lengthflags & 0x01
 
         packetlen = self.readLength((lengthflags & 0x06) >> 1)
-        self.readLength((lengthflags & 0x18) >> 3) # sequencelen
+        self.readLength((lengthflags & 0x18) >> 3) # sequence
         self.readLength((lengthflags & 0x60) >> 5) # padlen
 
         # Override for the fixed-size packet case or when packetlen invalid
@@ -158,10 +160,13 @@ class ASFPacketParser(log.Loggable):
 
     def readPayload(self, hasPayloadLength):
         streamNumberByte = self.readUInt8()
-        self.readLength(self._mediaobjectnumberlengthtype) # mediaObjectNumber
+        mediaObjectNumber = self.readLength(self._mediaobjectnumberlengthtype)
         # For the compressed payload case, this is actually 'presentation time',
         # but we don't use it, nor verify its validity.
-        self.readLength(self._offsetintomediaobjectlengthtype) # offsetIntoMediaObject
+        offsetIntoMediaObject = self.readLength(
+            self._offsetintomediaobjectlengthtype)
+        self.debug("Media object number %d, offset %d", mediaObjectNumber,
+            offsetIntoMediaObject)
         replicateddatalength = self.readLength(self._replicateddatalengthtype)
         if replicateddatalength == 1:
             # Special value meaning we have compressed payloads
@@ -169,9 +174,21 @@ class ASFPacketParser(log.Loggable):
         else:
             self._off += replicateddatalength # TODO: figure out what this is.
         
-        #streamNumber = streamNumberByte & 0x7f
-        self.hasKeyframe = self.hasKeyframe or (streamNumberByte & 0x80)
+        streamNumber = streamNumberByte & 0x7f
+        if streamNumber not in self._asfinfo.streams:
+            raise InvalidBitstreamException(
+                "Stream number %d unknown" % streamNumber)
+
+        # Mark as keyframe if any payload within this packet is a keyframe.
+        # A payload is considered a keyframe if it's the first payload for this
+        # media object (i.e. has offset into media object set to 0)
+        kf = (streamNumberByte & 0x80) and offsetIntoMediaObject == 0
+
+        self.hasKeyframe = self.hasKeyframe or kf
         self.debug("Payload hasKeyframe: %r", self.hasKeyframe)
+
+        self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
+            mediaObjectNumber
 
         if hasPayloadLength:
             payloadLength = self.readLength(self._payloadlengthtype)
@@ -185,11 +202,18 @@ class ASFPacketParser(log.Loggable):
         for _ in xrange(numPayloads):
             self.readPayload(True)
 
+class ASFStreamInfo(object):
+    def __init__(self):
+        # We don't yet actually read any per-stream information out
+        pass
+
 class ASFInfo(object):
     def __init__(self):
         self.min_pkt_len = 0
         self.max_pkt_len = 0
         self.hasKeyframes = False
+
+        self.streams = {} # streamNumber -> ASFStreamInfo
 
 class ASFHTTPParser(log.Loggable):
     """
@@ -231,6 +255,20 @@ class ASFHTTPParser(log.Loggable):
         if offset + length > len(buf):
             raise InvalidBitstreamException("Invalid object: data too short")
         return (type, offset+24, length-24)
+
+    def _parseStreamPropertiesObject(self, buf, offset, length):
+        if length < 54:
+            raise InvalidBitstreamException(
+                "Stream properties object too short")
+
+        flags = _readUInt16(buf, offset + 48)
+        streamNumber = flags & 0x7f
+
+        if streamNumber in self._asfinfo.streams:
+            raise InvalidBitstreamException(
+                "Duplicate definition of stream %d" % (streamNumber))
+
+        self._asfinfo.streams[streamNumber] = ASFStreamInfo()
 
     def _parseFilePropertiesObject(self, buf, offset, length):
         if length != 80:
@@ -288,6 +326,8 @@ class ASFHTTPParser(log.Loggable):
 
             if guid == GUID.ASF_HEADER_FILE_PROPERTIES_OBJECT:
                 self._parseFilePropertiesObject(buf, offset, length)
+            if guid == GUID.ASF_HEADER_STREAM_PROPERTIES_OBJECT:
+                self._parseStreamPropertiesObject(buf, offset, length)
             elif guid == GUID.ASF_HEADER_EXTENSION_OBJECT:
                 self._parseHeaderExtensionObject(buf, offset, length)
             else:
@@ -310,7 +350,6 @@ class ASFHTTPParser(log.Loggable):
         headerBuf.caps = self._caps
 
         return headerBuf
-
 
     def _getDataBuffer(self, data):
         pp = ASFPacketParser(self._asfinfo, data)
@@ -364,7 +403,7 @@ class ASFHTTPParser(log.Loggable):
                     elif self._packet[1] == 'E':
                         # We don't parse the contents of this packet currently;
                         # I haven't even looked to see what it contains
-                        self.debug("EOS packet received")
+                        self.info("EOS packet received, halting")
                         return False
                     else:
                         # We'll just skip over this one...

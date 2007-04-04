@@ -1,3 +1,10 @@
+2007-04-04  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Parse more of header.
+	  Parse more of payload headers.
+	  Use this for correct marking of delta unit in buffers.
+
 2007-04-04  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma.py
