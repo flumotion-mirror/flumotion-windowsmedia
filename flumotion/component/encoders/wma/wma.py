@@ -29,7 +29,7 @@ class WMAEncoder(feedcomponent.ParseLaunchComponent):
         return d
 
     def get_pipeline_string(self, properties):
-        return "audioconvert ! fluwmaenc name=encoder"
+        return "identity drop-probablity=0.0001 ! audioconvert ! fluwmaenc name=encoder"
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')

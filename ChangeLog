@@ -1,3 +1,10 @@
+2007-04-04  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/wma/wma.py
+	  (WMAEncoder.get_pipeline_string):
+	  Add drop-probability identity for now to force things to stay in
+	  sync.  0.01 % is about 1 buffer every 5 minutes for 48Khz streams.
+
 2007-04-04  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
