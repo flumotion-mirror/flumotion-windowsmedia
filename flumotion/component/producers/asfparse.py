@@ -134,8 +134,8 @@ class ASFPacketParser(log.Loggable):
         multipay = lengthflags & 0x01
 
         packetlen = self.readLength((lengthflags & 0x06) >> 1)
-        #sequencelen = self.readLength((lengthflags & 0x18) >> 3)
-        #padlen = self.readLength((lengthflags & 0x60) >> 5)
+        self.readLength((lengthflags & 0x18) >> 3) # sequencelen
+        self.readLength((lengthflags & 0x60) >> 5) # padlen
 
         # Override for the fixed-size packet case or when packetlen invalid
         if self._asfinfo.min_pkt_len == self._asfinfo.max_pkt_len or \
@@ -147,6 +147,7 @@ class ASFPacketParser(log.Loggable):
 
         self.timestampMS = self.readUInt32()
         self.durationMS = self.readUInt16()
+        self.debug("Timestamp %dms, duration: %dms", self.timestampMS, self.durationMS)
 
         # Now we need to actually parse the payloads to figure out whether we
         # have a keyframe... 
@@ -157,16 +158,14 @@ class ASFPacketParser(log.Loggable):
 
     def readPayload(self, hasPayloadLength):
         streamNumberByte = self.readUInt8()
-        #mediaobjectNumber = self.readLength(self._mediaobjectnumberlengthtype)
+        self.readLength(self._mediaobjectnumberlengthtype) # mediaObjectNumber
         # For the compressed payload case, this is actually 'presentation time',
         # but we don't use it, nor verify its validity.
-        #offsetintomediaobject = self.readLength(
-        #    self._offsetintomediaobjectlengthtype)
+        self.readLength(self._offsetintomediaobjectlengthtype) # offsetIntoMediaObject
         replicateddatalength = self.readLength(self._replicateddatalengthtype)
         if replicateddatalength == 1:
             # Special value meaning we have compressed payloads
-            #prestimedelta = self.readUInt8()
-            pass
+            self.readUInt8() # prestimedelta
         else:
             self._off += replicateddatalength # TODO: figure out what this is.
         
@@ -362,6 +361,11 @@ class ASFHTTPParser(log.Loggable):
                     elif self._packet[1] == 'D':
                         self.debug("Data packet header received")
                         self._packet_type = self.PACKET_DATA
+                    elif self._packet[1] == 'E':
+                        # We don't parse the contents of this packet currently;
+                        # I haven't even looked to see what it contains
+                        self.debug("EOS packet received")
+                        return
                     else:
                         # We'll just skip over this one...
                         self.warning("Unknown packet type: %s", self._packet[1])
@@ -424,23 +428,25 @@ class ASFSrc(gst.BaseSrc):
 
     def do_create(self, offset, size):
         try:
-            buf = self.queue.pop()
+            (flowreturn, buf) = self.queue.pop()
         except queue.InterruptedException:
             return (gst.FLOW_WRONG_STATE, None)
 
-        return (gst.FLOW_OK, buf)
+        return (flowreturn, buf)
 
     def dataReceived(self, data):
         """
         Receive data from the twisted mainloop.
         Parses it to ASF, then adds to async queue.
         """
-        self.asfparser.parseData(data)
+        if not self.asfparser.parseData(data):
+            # EOS; push an appropriate result onto queue
+            self.queue.push((gst.FLOW_UNEXPECTED, None))
 
         while self.asfparser.hasBuffer():
             buf = self.asfparser.getBuffer()
 
-            self.queue.push(buf)
+            self.queue.push((gst.FLOW_OK, buf))
 
 gobject.type_register(ASFSrc)
 

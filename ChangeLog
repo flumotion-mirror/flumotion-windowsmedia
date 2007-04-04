@@ -1,3 +1,17 @@
+2007-04-04  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/encoders/wmv/wmv.py:
+	  Remove incorrect duplicate method (thanks pychecker!)
+
+	* flumotion/component/producers/asfparse.py:
+	  Handle EOS correctly.
+
+	* flumotion/component/producers/wms.py:
+	  Minor comment updates.
+
+	* misc/pycheckerrc:
+	  Raise max returns limit to 11.
+
 2007-03-13  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma.py:
@@ -12,6 +26,12 @@
 	* flumotion/component/encoders/wmv/wmv.py:
 	* flumotion/component/muxers/asf/asf.py:
 	  check for plugins needed.  This needs a recent (0.4.1.1) trunk.
+
+2007-02-26  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	* flumotion/component/producers/wms.py:
+	  Fix up timestamp parsing; broken by previous commit.
 
 2007-02-26  Michael Smith  <msmith@fluendo.com>
 

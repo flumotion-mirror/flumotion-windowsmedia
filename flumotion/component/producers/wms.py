@@ -289,8 +289,8 @@ class WMSRequest(server.Request, log.Loggable):
             server.Request.finish(self)
 
     def process(self):
-        # TODO: This nasty hack is needed because setHeader() mangles
-        # case, which WMEncoder doesn't cope with
+        # This nasty hack is needed because setHeader() mangles case, which 
+        # WMEncoder doesn't cope with. Is there a better way to do this?
         class HackString(str):
             def capitalize(self):
                 return self
@@ -421,7 +421,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                     return defer.fail(errors.ConfigError(msg))
 
     def do_start(self, *args, **kwargs):
-        # TODO: Write a real component!
+        # TODO: Write a real bouncer
         digester = DigestAuth("Flumotion Streaming Server WMS Component")
         digester.addUser("user", "test3")
 
