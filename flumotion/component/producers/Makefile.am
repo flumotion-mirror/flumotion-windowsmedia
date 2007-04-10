@@ -1,6 +1,6 @@
 include $(top_srcdir)/common/python.mk
 
-component_PYTHON = __init__.py wms.py asfparse.py queue.py
+component_PYTHON = __init__.py wms.py asfparse.py queue.py digest.py
 componentdir = $(libdir)/flumotion/python/flumotion/component/producers
 component_DATA = \
 	wms.xml

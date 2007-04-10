@@ -16,6 +16,8 @@
         <property name="type" type="string"
                   description="'master' to listen on a port, or 'slave' to slave to a porter (default master)" />
 
+        <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
+
         <!-- If type is 'master' (default) -->
         <property name="port" type="int"
                   description="Port to listen on (if type is 'master')" />
@@ -29,6 +31,20 @@
                   description="Password to authenticate with to the porter" />
         
 
+      </properties>
+    </component>
+    <component type="http-digest-bouncer"
+               base="flumotion/component/producers">
+      <source location="flumotion.component.producers.digest"/>
+
+      <entries>
+        <entry type="component" location="digest.py"
+               function="DigestBouncer"/>
+      </entries>
+
+      <properties>
+        <property name="filename" type="string" 
+                  description="Name of file containing usernames and password hashes"/>
       </properties>
     </component>
   </components>
@@ -45,6 +61,7 @@
                 <filename location="wms.py" />
                 <filename location="asfparse.py" />
                 <filename location="queue.py" />
+                <filename location="digest.py" />
             </directory>
         </directories>
     </bundle>

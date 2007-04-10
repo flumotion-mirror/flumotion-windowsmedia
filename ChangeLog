@@ -1,3 +1,12 @@
+2007-04-10  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/Makefile.am:
+	* flumotion/component/producers/digest.py:
+	* flumotion/component/producers/wms.py:
+	* flumotion/component/producers/wms.xml:
+	  Rewrite to factor authentication out into a helper class, and a
+	  separate bouncer.
+
 2007-04-04  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:

@@ -22,11 +22,12 @@ from twisted.web import resource, server, http
 from twisted.cred import credentials
 
 from flumotion.component import feedcomponent
-from flumotion.common import log, errors, messages
+from flumotion.common import log, errors, messages, keycards
 
 from flumotion.twisted import fdserver
 from flumotion.component.misc.porter import porterclient
 from flumotion.component.component import moods
+from flumotion.component.producers import digest
 
 from flumotion.component.producers import asfparse
 
@@ -38,16 +39,21 @@ class DigestAuth(log.Loggable):
 
     timeout = 60*60*3  # 3 hours.
     _qop_type = 'auth' # Others not implemented
-    _algorithm = 'MD5' # May also be set to 'MD5-sess'
 
-    def __init__(self, realm):
+    def __init__(self, component):
         self._outstanding = {} # opaque -> (nonce, timestamp)
         self._pushIds = {} # pushid -> authenticated
-        self._realm = realm
-        self._users = {}
 
-    def addUser(self, username, password):
-        self._users[username] = password
+        self._realm = None
+        self._component = component
+        self._bouncerName = None
+        self._requesterId = component.getName()
+
+    def setBouncerName(self, bouncerName):
+        self._bouncerName = bouncerName
+
+    def setRealm(self, realm):
+        self._realm = realm
 
     def _cleanupOutstanding(self):
         now = time.time()
@@ -118,64 +124,13 @@ class DigestAuth(log.Loggable):
         except ValueError:
             return ("", {})
 
-    def _calculateHA1(self, username, realm, password, nonce, cnonce):
-        """
-        Calculate H(A1) as from specification (RFC2617) section 3.2.2
-        """
-        m = md5.md5()
-        m.update(username)
-        m.update(':')
-        m.update(realm)
-        m.update(':')
-        m.update(password)
-        HA1 = m.digest()
-        if self._algorithm == 'MD5':
-            return HA1.encode('hex')
-        elif self._algorithm == 'MD5-sess':
-            m = md5.md5()
-            m.update(HA1)
-            m.update(':')
-            m.update(nonce)
-            m.update(':')
-            m.update(cnonce)
-            return m.digest().encode('hex')
-        else:
-            raise NotImplementedError("Unimplemented algorithm")
-
-    def _calculateHA2(self, method, uri):
-        # We don't support auth-int, otherwise we'd optionally need to do
-        # some more work here
-        m = md5.md5()
-        m.update(method)
-        m.update(':')
-        m.update(uri)
-        return m.digest().encode('hex')
-
-    def _calculateRequestDigest(self, realm, nonce, qop, ncvalue, cnonce,
-            username, password, method, uri):
-        HA1 = self._calculateHA1(username, realm, password, nonce, cnonce)
-        HA2 = self._calculateHA2(method, uri)
-
-        m = md5.md5()
-        m.update(HA1)
-        m.update(':')
-        m.update(nonce)
-        if qop:
-            m.update(':')
-            m.update(ncvalue)
-            m.update(':')
-            m.update(cnonce)
-            m.update(':')
-            m.update(self._qop_type)
-        m.update(':')
-        m.update(HA2)
-
-        return m.digest().encode('hex')
-
     def authenticate(self, request, pushId):
         """
         Attempt to authenticate a request.
-        Returns an HTTP response code (which should be set on the response)
+        Returns a tuple of (code, pushId, stale), or a deferred which will
+        return that.
+        'code' is the HTTP response code which should be set on the response.
+
         Handles HTTP Digest authentication, plus some special handling of the
         pushid cookie that windows-media-encoder uses
         """
@@ -220,10 +175,10 @@ class DigestAuth(log.Loggable):
             cnonce = attrs['cnonce']
         else:
             # This is also required for md5-sess
-            if self._algorithm == 'md5-sess':
-                if 'cnonce' not in attrs:
-                    self.debug("cnonce not present when md5-sess in use")
-                    return (http.BAD_REQUEST, pushId, False)
+            #if self._algorithm == 'md5-sess':
+            #    if 'cnonce' not in attrs:
+            #        self.debug("cnonce not present when md5-sess in use")
+            #        return (http.BAD_REQUEST, pushId, False)
             nccount = None
             cnonce = None
             
@@ -236,13 +191,7 @@ class DigestAuth(log.Loggable):
         nonce = attrs['nonce']
         username = attrs['username']
         uri = attrs['uri']
-        realm = attrs['realm']
-
-        if username not in self._users:
-            self.debug("Username not found in users db")
-            return (http.UNAUTHORIZED, pushId, False)
-
-        password = self._users[username]
+        #realm = attrs['realm']
 
         # Ensure we don't have old ones lying around. Rather inefficient but
         # not a practical problems
@@ -256,19 +205,41 @@ class DigestAuth(log.Loggable):
             self.debug("nonce doesn't correspond to opaque")
             return (http.BAD_REQUEST, pushId, False)
 
-        expected = self._calculateRequestDigest(realm, nonce, qop, nccount, 
-            cnonce, username, password, request.method, uri)
         response = attrs['response']
 
-        self.debug("Computed expected digest %s, received %s", expected, 
-            response)
-        if response != expected:
-            self.debug("Password incorrect")
+        keycard = keycards.HTTPDigestKeycard(username)
+        keycard.nonce = nonce
+        keycard.response = response
+
+        keycard.method = request.method
+        keycard.uri = uri
+
+        if qop:
+            keycard.qop = self._qop_type 
+            keycard.cnonce = cnonce
+            keycard.ncvalue = nccount
+
+        keycard.requesterId = self._requesterId
+
+        self.debug("Authenticating keycard against bouncer %s", 
+            self._bouncerName)
+        d = self._component.medium.callRemote('authenticate', 
+            self._bouncerName, keycard)
+
+        def _success(result):
+            self.debug("Got result %r, keycard now %r", result, keycard)
+            if result and result.state == keycards.AUTHENTICATED:
+                self._pushIds[pushId] = True
+                return (http.OK, pushId, False)
+            else:
+                return (http.UNAUTHORIZED, pushId, False)
+
+        def _failed(failure):
+            self.debug("Authentication failed: %r", failure)
             return (http.UNAUTHORIZED, pushId, False)
 
-        # Success!
-        self._pushIds[pushId] = True
-        return (http.OK, pushId, False)
+        d.addCallbacks(_success, _failed)
+        return d
 
 class WMSRequest(server.Request, log.Loggable):
 
@@ -316,41 +287,48 @@ class WMSRequest(server.Request, log.Loggable):
             if cookieKey == 'push-id':
                 pushId = int(cookieVal)
 
-        (code, pushId, stale) = digester.authenticate(self, pushId)
-
-        if code >= 400:
-            self.debug("Authentication failed")
-            self.setResponseCode(code)
-            if code == 401:
-                self.headers[HackString("WWW-Authenticate")] = \
-                    digester.generateWWWAuthenticateHeader(self, stale)
-                if pushId:
-                    self.headers[HackString("Set-Cookie")] = \
-                        "push-id=%d" % pushId
-            self.finish()
-            return
-
-        ctype = self.getHeader("content-type")
-        if ctype == 'application/x-wms-pushsetup':
-            if pushId:
-                self.headers["Set-Cookie"] = "push-id=%d" % pushId
-            self.setResponseCode(http.NO_CONTENT)
-            self.finish()
-            return
-        elif ctype == 'application/x-wms-pushstart':
-            self.debug("Got pushstart!")
-            if self.channel.wmsfactory.srcelement.isStreaming():
-                self.warning("Already streaming")
+        # Handle the rest of this as deferred crap
+        d = defer.maybeDeferred(digester.authenticate, self, pushId)
+        def authenticated((code, pushId, stale)):
+            if code >= 400:
+                self.debug("Authentication failed")
+                self.setResponseCode(code)
+                if code == 401:
+                    self.headers[HackString("WWW-Authenticate")] = \
+                        digester.generateWWWAuthenticateHeader(self, stale)
+                    if pushId:
+                        self.headers[HackString("Set-Cookie")] = \
+                            "push-id=%d" % pushId
                 self.finish()
                 return
-            self._srcelement = self.channel.wmsfactory.srcelement
-            self._srcelement.setStreaming(True)
-            self.finish()
-            return
-        else:
-            self.debug("Unknown content-type: %s", ctype)
-            self.finish()
-            return
+
+            self.debug("Authentication successful: code %d, pushId %d", 
+                code, pushId)
+
+            ctype = self.getHeader("content-type")
+            if ctype == 'application/x-wms-pushsetup':
+                if pushId:
+                    self.headers["Set-Cookie"] = "push-id=%d" % pushId
+                self.setResponseCode(http.NO_CONTENT)
+                self.finish()
+                return
+            elif ctype == 'application/x-wms-pushstart':
+                self.debug("Got pushstart!")
+                if self.channel.wmsfactory.srcelement.isStreaming():
+                    self.warning("Already streaming")
+                    self.finish()
+                    return
+                self._srcelement = self.channel.wmsfactory.srcelement
+                self._srcelement.setStreaming(True)
+                self.finish()
+                return
+            else:
+                self.debug("Unknown content-type: %s", ctype)
+                self.finish()
+                return
+
+        d.addCallback(authenticated)
+        return d
 
     def dataReceived(self, data):
         if not self._srcelement:
@@ -411,6 +389,8 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     def init(self):
         self._srcelement = asfparse.ASFSrc("asfsrc")
 
+        self._authenticator = DigestAuth(self)
+
     def do_check(self):
         props = self.config['properties']
 
@@ -420,12 +400,19 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                     msg = "slave mode, missing required property 'porter-%s'" % k
                     return defer.fail(errors.ConfigError(msg))
 
-    def do_start(self, *args, **kwargs):
-        # TODO: Write a real bouncer
-        digester = DigestAuth("Flumotion Streaming Server WMS Component")
-        digester.addUser("user", "test3")
+    def do_setup(self):
+        props = self.config['properties']
+        if 'bouncer' in props:
+            bouncerName = props['bouncer']
+            self._authenticator.setBouncerName(bouncerName)
 
-        factory = WMSFactory(digester, self._srcelement)
+        realm = props.get('realm', "Flumotion Windows Media Server Component")
+        self._authenticator.setRealm(realm)
+
+        return feedcomponent.ParseLaunchComponent.do_setup(self)
+
+    def do_start(self, *args, **kwargs):
+        factory = WMSFactory(self._authenticator, self._srcelement)
         if self.type == 'slave':
             # Slaved to a porter...
             d1 = feedcomponent.ParseLaunchComponent.do_start(self,
@@ -463,7 +450,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                 self.setMood(moods.sad)
                 return defer.fail(errors.ComponentStartHandledError(t))
             
-        reactor.listenTCP(8888, WMSFactory(digester, self._srcelement))
+        reactor.listenTCP(8888, factory)
 
         return feedcomponent.ParseLaunchComponent.do_start(self, *args, 
             **kwargs)
