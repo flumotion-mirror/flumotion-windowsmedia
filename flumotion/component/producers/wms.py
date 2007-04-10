@@ -14,7 +14,6 @@
 
 import gst
 import time
-import md5
 import random
 
 from twisted.internet import reactor, defer, error
@@ -27,7 +26,6 @@ from flumotion.common import log, errors, messages, keycards
 from flumotion.twisted import fdserver
 from flumotion.component.misc.porter import porterclient
 from flumotion.component.component import moods
-from flumotion.component.producers import digest
 
 from flumotion.component.producers import asfparse
 
