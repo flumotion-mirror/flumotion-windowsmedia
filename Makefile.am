@@ -8,6 +8,7 @@ include $(srcdir)/common/pychecker.mk
 SUBDIRS = flumotion common misc
 
 EXTRA_DIST = \
+	env \
 	LICENSE.Flumotion \
 	flumotion-windowsmedia.spec
 
