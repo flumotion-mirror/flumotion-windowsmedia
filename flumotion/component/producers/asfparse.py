@@ -172,7 +172,9 @@ class ASFPacketParser(log.Loggable):
             # Special value meaning we have compressed payloads
             self.readUInt8() # prestimedelta
         else:
-            self._off += replicateddatalength # TODO: figure out what this is.
+            # Skip over the replicated data (application or implementation 
+            # specific data attached to each payload)
+            self._off += replicateddatalength 
         
         streamNumber = streamNumberByte & 0x7f
         if streamNumber not in self._asfinfo.streams:

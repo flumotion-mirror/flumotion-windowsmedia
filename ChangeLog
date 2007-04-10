@@ -1,5 +1,12 @@
 2007-04-10  Michael Smith  <msmith@fluendo.com>
 
+	* flumotion/component/producers/asfparse.py:
+	  Get rid of remaining TODO.
+	  Now I just need to make it work reliably and/or on more than one
+	  system!
+
+2007-04-10  Michael Smith  <msmith@fluendo.com>
+
 	* flumotion/component/producers/Makefile.am:
 	* flumotion/component/producers/digest.py:
 	* flumotion/component/producers/wms.py:
