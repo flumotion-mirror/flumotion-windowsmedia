@@ -1,6 +1,12 @@
 2007-04-11  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
+	* flumotion/component/producers/wms.py:
+	  Handle a reconnect from the encoder after a network outage.
+
+2007-04-11  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
 	  Handle encoder disconnection more gracefully, so we can reconnect an
 	  encoder later and have it work again.
 

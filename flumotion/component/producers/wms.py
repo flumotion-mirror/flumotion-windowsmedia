@@ -312,12 +312,14 @@ class WMSRequest(server.Request, log.Loggable):
                 return
             elif ctype == 'application/x-wms-pushstart':
                 self.debug("Got pushstart!")
-                if self.channel.wmsfactory.srcelement.isStreaming():
-                    self.warning("Already streaming")
-                    self.finish()
-                    return
+                if self.channel.wmsfactory.streamingRequest:
+                    self.warning("Already streaming; dropping existing "
+                        "connection")
+                    self.channel.wmsfactory.streamingRequest.finish()
+                    self.channel.wmsfactory.srcelement.resetASFParser()
+
+                self.channel.wmsfactory.streamingRequest = self
                 self._srcelement = self.channel.wmsfactory.srcelement
-                self._srcelement.setStreaming(True)
                 self.finish()
                 return
             else:
@@ -358,10 +360,6 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
             self.debug("Raw data received for non-streaming request")
             http.HTTPChannel.rawDataReceived(self, data)
 
-    def connectionLost(self, reason):
-        self.wmsfactory.srcelement.setStreaming(False)
-        return http.HTTPChannel.connectionLost(self, reason)
-
 class WMSFactory(http.HTTPFactory):
     protocol = WMSChannel
     requestFactory = WMSRequest
@@ -371,6 +369,8 @@ class WMSFactory(http.HTTPFactory):
 
         self.digester = auth
         self.srcelement = srcelement
+
+        self.streamingRequest = None
 
     def buildProtocol(self, addr):
         channel = http.HTTPFactory.buildProtocol(self, addr)
