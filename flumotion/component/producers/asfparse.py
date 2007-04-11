@@ -482,8 +482,9 @@ class ASFSrc(gst.BaseSrc):
         Parses it to ASF, then adds to async queue.
         """
         if not self.asfparser.parseData(data):
-            # EOS; push an appropriate result onto queue
-            self.queue.push((gst.FLOW_UNEXPECTED, None))
+            # EOS; but don't send an EOS, so we can recover if an encoder 
+            # reconnects later
+            return
 
         while self.asfparser.hasBuffer():
             buf = self.asfparser.getBuffer()
