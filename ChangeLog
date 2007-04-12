@@ -1,3 +1,11 @@
+2007-04-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/wma/wma.py
+	  (WMAEncoder.get_pipeline_string, WMAEncoder.configure_pipeline):
+	* flumotion/component/encoders/wma/wma.xml:
+	  Since we only want dropping to fix sync for A/V streams, make
+	  this configurable.
+
 2007-04-12  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms.py:
