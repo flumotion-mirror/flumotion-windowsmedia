@@ -1,3 +1,11 @@
+2007-04-12  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms.py:
+	* flumotion/component/producers/wms.xml:
+	  Add 'secure' property. If set to false (defaults to true), then
+	  don't check opaque/nonce for validity; this enables replay attacks
+	  and makes the authentication approximately as secure as Basic auth.
+
 2007-04-11  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:

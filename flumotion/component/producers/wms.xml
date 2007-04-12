@@ -17,6 +17,7 @@
                   description="'master' to listen on a port, or 'slave' to slave to a porter (default master)" />
 
         <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
+        <property name="secure" type="boolean" description="Whether authentication is done securely" />
 
         <!-- If type is 'master' (default) -->
         <property name="port" type="int"

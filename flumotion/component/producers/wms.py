@@ -46,12 +46,16 @@ class DigestAuth(log.Loggable):
         self._component = component
         self._bouncerName = None
         self._requesterId = component.getName()
+        self._ignoreNonceAndOpaque = False
 
     def setBouncerName(self, bouncerName):
         self._bouncerName = bouncerName
 
     def setRealm(self, realm):
         self._realm = realm
+
+    def enableReplayAttacks(self):
+        self._ignoreNonceAndOpaque = True
 
     def _cleanupOutstanding(self):
         now = time.time()
@@ -194,14 +198,16 @@ class DigestAuth(log.Loggable):
         # Ensure we don't have old ones lying around. Rather inefficient but
         # not a practical problems
         self._cleanupOutstanding()
-        if opaque not in self._outstanding:
-            self.debug("opaque not in outstanding")
-            return (http.UNAUTHORIZED, pushId, True)
-        (expectednonce, ts) = self._outstanding[opaque]
+        if not self._ignoreNonceAndOpaque:
+            if opaque not in self._outstanding:
+                self.debug("opaque not in outstanding")
+                # WME ignores 'stale', unfortunately...
+                return (http.UNAUTHORIZED, pushId, True)
+            (expectednonce, ts) = self._outstanding[opaque]
 
-        if expectednonce != nonce:
-            self.debug("nonce doesn't correspond to opaque")
-            return (http.BAD_REQUEST, pushId, False)
+            if expectednonce != nonce:
+                self.debug("nonce doesn't correspond to opaque")
+                return (http.BAD_REQUEST, pushId, False)
 
         response = attrs['response']
 
@@ -387,8 +393,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     def init(self):
         self._srcelement = asfparse.ASFSrc("asfsrc")
 
-        self._authenticator = DigestAuth(self)
-
     def do_check(self):
         props = self.config['properties']
 
@@ -405,7 +409,11 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             self._authenticator.setBouncerName(bouncerName)
 
         realm = props.get('realm', "Flumotion Windows Media Server Component")
+        self._authenticator = DigestAuth(self)
         self._authenticator.setRealm(realm)
+
+        if not props.get('secure', True):
+            self._authenticator.enableReplayAttacks()
 
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 
