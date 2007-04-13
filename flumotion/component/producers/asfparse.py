@@ -67,9 +67,9 @@ def _readUInt8(buf, offset):
 
 class ASFPacketParser(log.Loggable):
 
-    def __init__(self, asfinfo, packet):
+    def __init__(self, asfinfo):
         self._asfinfo = asfinfo
-        self._data = packet
+        self._data = None
         self._off = 0
 
         self.packetLen = 0
@@ -109,7 +109,10 @@ class ASFPacketParser(log.Loggable):
         else:
             raise InvalidBitstreamException("Invalid length type")
 
-    def parseDataPacket(self):
+    def parseDataPacket(self, data, offset):
+        self._data = data
+        self._off = offset
+
         self.debug("offset %d at start", self._off)
         lengthflags = self.readUInt8()
         if lengthflags & 0x80:
@@ -229,15 +232,26 @@ class ASFHTTPParser(log.Loggable):
 
     PACKET_HEADER = 1
     PACKET_DATA = 2
+
+    VARIANT_PUSH = 1
+    VARIANT_PULL = 2
     
-    def __init__(self):
+    def __init__(self, push):
+        # There are two variants on the format. One is used in push mode, one in
+        # pull mode. The only difference I've noted is that each packet in 
+        # pull mode has a 12 byte header, push mode is 4 bytes. The 12 byte 
+        # header starts with the same 4 bytes, then has an extra 8 bytes that 
+        # I don't know the meaning of (but ignoring them seems to work ok)
+        self._pushmode = push
+        self.reset()
+
+    def reset(self):
         self._http_parser_state = self.STATE_HEADER
         self._bytes_remaining = self.HEADER_BYTES
         self._packet = ""
         self._packet_type = None
         self._asfbuffers = []
         self._caps = None
-
         self._asfinfo = ASFInfo()
 
     def _readType(self, buf, offset):
@@ -313,7 +327,11 @@ class ASFHTTPParser(log.Loggable):
             offset = offset + length
 
     def _getHeaderBuffer(self, buf):
-        (type, offset, headersLength) = self._readObject(buf, 0)
+        if self._pushmode:
+            (type, offset, headersLength) = self._readObject(buf, 0)
+        else:
+            (type, offset, headersLength) = self._readObject(buf, 8)
+
         if type != GUID.ASF_HEADER_OBJECT:
             raise InvalidBitstreamException(
                 "Header object does not contain ASF header")
@@ -354,8 +372,11 @@ class ASFHTTPParser(log.Loggable):
         return headerBuf
 
     def _getDataBuffer(self, data):
-        pp = ASFPacketParser(self._asfinfo, data)
-        pp.parseDataPacket()
+        pp = ASFPacketParser(self._asfinfo)
+        if self._pushmode:
+            pp.parseDataPacket(data, 0)
+        else:
+            pp.parseDataPacket(data, 8)
 
         # Some of these require padding to be added here.
         self.debug("packet length %d, required to be %d", len(data), 
@@ -447,15 +468,15 @@ class ASFSrc(gst.BaseSrc):
                         gst.caps_from_string("video/x-ms-asf")),
         )
 
-    def __init__(self, name):
+    def __init__(self, name, push=True):
         gst.BaseSrc.__init__(self)
         self.set_name(name)
 
         self.queue = queue.AsyncQueue()
-        self.asfparser = ASFHTTPParser()
+        self.asfparser = ASFHTTPParser(push)
 
     def resetASFParser(self):
-        self.asfparser = ASFHTTPParser()
+        self.asfparser.reset()
 
     def do_unlock(self):
         self.queue.unblock()

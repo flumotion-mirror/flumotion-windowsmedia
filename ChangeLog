@@ -1,5 +1,11 @@
 2007-04-13  Michael Smith  <msmith@fluendo.com>
 
+	* flumotion/component/producers/asfparse.py:
+	  Infrastructure in asf parser and ASFSrc to support the pull-mode
+	  variant of the format. Unused.
+
+2007-04-13  Michael Smith  <msmith@fluendo.com>
+
 	* flumotion/component/producers/wms.py:
 	  Fix up previous changes to authenticators to work again.
 
