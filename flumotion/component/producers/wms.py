@@ -404,13 +404,14 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
     def do_setup(self):
         props = self.config['properties']
+        self._authenticator = DigestAuth(self)
+
+        realm = props.get('realm', "Flumotion Windows Media Server Component")
+        self._authenticator.setRealm(realm)
+
         if 'bouncer' in props:
             bouncerName = props['bouncer']
             self._authenticator.setBouncerName(bouncerName)
-
-        realm = props.get('realm', "Flumotion Windows Media Server Component")
-        self._authenticator = DigestAuth(self)
-        self._authenticator.setRealm(realm)
 
         if not props.get('secure', True):
             self._authenticator.enableReplayAttacks()

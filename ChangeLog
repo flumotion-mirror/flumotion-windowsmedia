@@ -1,3 +1,8 @@
+2007-04-13  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms.py:
+	  Fix up previous changes to authenticators to work again.
+
 2007-04-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma.py
