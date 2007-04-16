@@ -37,6 +37,7 @@ class DigestAuth(log.Loggable):
 
     timeout = 60*60*3  # 3 hours.
     _qop_type = 'auth' # Others not implemented
+    _algorithm = "MD5"
 
     def __init__(self, component):
         self._outstanding = {} # opaque -> (nonce, timestamp)
@@ -81,7 +82,7 @@ class DigestAuth(log.Loggable):
         return self._generateRandomString(16)
 
     def generateWWWAuthenticateHeader(self, request, stale=False):
-        res = 'Digest'
+        res = 'Digest '
         while True:
             opaque = self._generateOpaque()
             timestamp = time.time()
@@ -95,17 +96,22 @@ class DigestAuth(log.Loggable):
                   'qop':    (False, self._qop_type),
                   'nonce':  (True, nonce),
                   'opaque': (True, opaque),
-                  # We don't send algorithm, if we do WME fails (WTF?)
-                  #'algorithm': (False, self._algorithm)
+                  'algorithm': (False, self._algorithm)
                  }
         if stale:
             params['stale'] = (False, 'true')
 
+        first = True
         for (k,(quoted,v)) in params.items():
-            if quoted:
-                res += " %s=\"%s\"" % (k,v)
+            if not first:
+                res += ","
             else:
-                res += " %s=%s" % (k,v)
+                first = False
+
+            if quoted:
+                res += "%s=\"%s\"" % (k,v)
+            else:
+                res += "%s=%s" % (k,v)
 
         return res
 
@@ -184,10 +190,9 @@ class DigestAuth(log.Loggable):
             nccount = None
             cnonce = None
             
-        # WM Encoder sends realm="", so this doesn't match. So, skip this check
-        #if attrs['realm'] != self._realm:
-        #    request.setResponseCode(http.BAD_REQUEST)
-        #    return False
+        if attrs['realm'] != self._realm:
+            request.setResponseCode(http.BAD_REQUEST)
+            return False
 
         opaque = attrs['opaque']
         nonce = attrs['nonce']
