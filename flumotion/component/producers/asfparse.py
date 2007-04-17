@@ -449,6 +449,13 @@ class ASFHTTPParser(log.Loggable):
                             len(self._packet))
                         buf = self._getDataBuffer(self._packet)
                         self._asfbuffers.append(buf)
+                    elif self._packet_type == self.PACKET_UNKNOWN:
+                        # Write out up to 20 bytes for later perusal...
+                        outlen = min(len(self._packet), 20)
+                        p = ""
+                        for i in xrange(outlen):
+                            p += "0x%.2x," % (ord(self._packet[i]),)
+                        self.debug("Unknown packet: %s", p)
 
                     self._http_parser_state = self.STATE_HEADER
                     self._bytes_remaining = self.HEADER_BYTES
