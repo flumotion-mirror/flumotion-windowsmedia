@@ -1,3 +1,11 @@
+2007-04-17  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Fix logic for skipping unknown packet types ('F' occurred in
+	  testing) so we don't try and parse it as an ASF data packet, and
+	  then fail.
+	  Add some comments on packet types.
+
 2007-04-16  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms.py:

@@ -230,12 +230,10 @@ class ASFHTTPParser(log.Loggable):
 
     HEADER_BYTES = 4
 
+    PACKET_UNKNOWN = 0
     PACKET_HEADER = 1
     PACKET_DATA = 2
 
-    VARIANT_PUSH = 1
-    VARIANT_PULL = 2
-    
     def __init__(self, push):
         # There are two variants on the format. One is used in push mode, one in
         # pull mode. The only difference I've noted is that each packet in 
@@ -429,8 +427,14 @@ class ASFHTTPParser(log.Loggable):
                         self.info("EOS packet received, halting")
                         return False
                     else:
+                        # There's an 'F' type as well; I have no idea what 
+                        # this is. According to the MPlayer source code, there's
+                        # a 'C' type meaning 'Clear ASF configuration' or 
+                        # something like that, but I've never seen that.
+
                         # We'll just skip over this one...
                         self.warning("Unknown packet type: %s", self._packet[1])
+                        self._packet_type = self.PACKET_UNKNOWN
 
                     self._bytes_remaining = ((ord(self._packet[3]) << 8) |
                                              (ord(self._packet[2])))
