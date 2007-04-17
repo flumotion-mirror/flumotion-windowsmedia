@@ -1,6 +1,13 @@
 2007-04-17  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:
+	* flumotion/component/producers/wms.py:
+	  Downgrade many debug statements seen continually in normal operation
+	  to log level, to avoid creating ridiculously oversized logfiles.
+
+2007-04-17  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
 	  Add some code to dump the first few bytes of unknown packets so we
 	  can inspect them later.
 

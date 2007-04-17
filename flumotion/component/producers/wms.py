@@ -365,10 +365,10 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
                 self._streaming_request = self.requests[-1]
                 self._streaming_request.setStreaming()
                 self.allContentReceived()
-            self.debug("Data received for streaming post request")
+            self.log("Data received for streaming post request")
             self._streaming_request.dataReceived(data)
         else:
-            self.debug("Raw data received for non-streaming request")
+            self.log("Raw data received for non-streaming request")
             http.HTTPChannel.rawDataReceived(self, data)
 
 class WMSFactory(http.HTTPFactory):

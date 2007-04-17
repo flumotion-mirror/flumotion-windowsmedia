@@ -113,7 +113,7 @@ class ASFPacketParser(log.Loggable):
         self._data = data
         self._off = offset
 
-        self.debug("offset %d at start", self._off)
+        self.log("offset %d at start", self._off)
         lengthflags = self.readUInt8()
         if lengthflags & 0x80:
             # Has ECC data; we don't check this
@@ -127,7 +127,7 @@ class ASFPacketParser(log.Loggable):
             lengthflags = self.readUInt8()
         propertyflags = self.readUInt8()
 
-        self.debug("offset %d after reading propertyflags", self._off)
+        self.log("offset %d after reading propertyflags", self._off)
         self._replicateddatalengthtype = propertyflags & 0x03
         self._offsetintomediaobjectlengthtype = (propertyflags & 0x0c) >> 2
         self._mediaobjectnumberlengthtype = (propertyflags & 0x30) >> 4
@@ -152,7 +152,7 @@ class ASFPacketParser(log.Loggable):
 
         self.timestampMS = self.readUInt32()
         self.durationMS = self.readUInt16()
-        self.debug("Timestamp %dms, duration: %dms", self.timestampMS, self.durationMS)
+        self.log("Timestamp %dms, duration: %dms", self.timestampMS, self.durationMS)
 
         # Now we need to actually parse the payloads to figure out whether we
         # have a keyframe... 
@@ -168,7 +168,7 @@ class ASFPacketParser(log.Loggable):
         # but we don't use it, nor verify its validity.
         offsetIntoMediaObject = self.readLength(
             self._offsetintomediaobjectlengthtype)
-        self.debug("Media object number %d, offset %d", mediaObjectNumber,
+        self.log("Media object number %d, offset %d", mediaObjectNumber,
             offsetIntoMediaObject)
         replicateddatalength = self.readLength(self._replicateddatalengthtype)
         if replicateddatalength == 1:
@@ -190,7 +190,7 @@ class ASFPacketParser(log.Loggable):
         kf = (streamNumberByte & 0x80) and offsetIntoMediaObject == 0
 
         self.hasKeyframe = self.hasKeyframe or kf
-        self.debug("Payload hasKeyframe: %r", self.hasKeyframe)
+        self.log("Payload hasKeyframe: %r", self.hasKeyframe)
 
         self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
             mediaObjectNumber
@@ -377,7 +377,7 @@ class ASFHTTPParser(log.Loggable):
             pp.parseDataPacket(data, 8)
 
         # Some of these require padding to be added here.
-        self.debug("packet length %d, required to be %d", len(data), 
+        self.log("packet length %d, required to be %d", len(data), 
             pp.packetLen)
         if len(data) < pp.packetLen:
             pad = '\0' * (pp.packetLen - len(data))
@@ -389,17 +389,17 @@ class ASFHTTPParser(log.Loggable):
         buf.timestamp = pp.timestampMS * gst.MSECOND
         buf.duration = pp.durationMS * gst.MSECOND
         if self._asfinfo.hasKeyframes and not pp.hasKeyframe:
-            self.debug("Setting delta unit")
+            self.log("Setting delta unit")
             buf.flag_set(gst.BUFFER_FLAG_DELTA_UNIT)
         else:
-            self.debug("Not setting delta unit")
+            self.log("Not setting delta unit")
 
         return buf
 
     def parseData(self, data):
         length = len(data)
         offset = 0
-        self.debug("Received %d byte buffer", length)
+        self.log("Received %d byte buffer", length)
         while offset < length:
             rem = length - offset
             bytes = min(rem, self._bytes_remaining)
@@ -419,7 +419,7 @@ class ASFHTTPParser(log.Loggable):
                         self.debug("Header packet header received")
                         self._packet_type = self.PACKET_HEADER
                     elif self._packet[1] == 'D':
-                        self.debug("Data packet header received")
+                        self.log("Data packet header received")
                         self._packet_type = self.PACKET_DATA
                     elif self._packet[1] == 'E':
                         # We don't parse the contents of this packet currently;
@@ -445,7 +445,7 @@ class ASFHTTPParser(log.Loggable):
                         buf = self._getHeaderBuffer(self._packet)
                         self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_DATA:
-                        self.debug("Received ASF data, length %d", 
+                        self.log("Received ASF data, length %d", 
                             len(self._packet))
                         buf = self._getDataBuffer(self._packet)
                         self._asfbuffers.append(buf)
