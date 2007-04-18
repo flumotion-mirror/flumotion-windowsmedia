@@ -1,3 +1,10 @@
+2007-04-18  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Handle 'F' packets explicitly (by ignoring them! This protocol is
+	  crack...), pretend they're called 'filler' packets.
+	  This isn't enough yet; this needs HTTP-level support.
+
 2007-04-17  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:

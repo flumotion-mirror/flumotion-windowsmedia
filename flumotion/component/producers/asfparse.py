@@ -233,6 +233,7 @@ class ASFHTTPParser(log.Loggable):
     PACKET_UNKNOWN = 0
     PACKET_HEADER = 1
     PACKET_DATA = 2
+    PACKET_FILLER = 3
 
     def __init__(self, push):
         # There are two variants on the format. One is used in push mode, one in
@@ -426,9 +427,11 @@ class ASFHTTPParser(log.Loggable):
                         # I haven't even looked to see what it contains
                         self.info("EOS packet received, halting")
                         return False
+                    elif self._packet[1] == 'F':
+                        # Filler packet received; ignore it.
+                        self._packet_type = self.PACKET_FILLER
                     else:
-                        # There's an 'F' type as well; I have no idea what 
-                        # this is. According to the MPlayer source code, there's
+                        # According to the MPlayer source code, there's
                         # a 'C' type meaning 'Clear ASF configuration' or 
                         # something like that, but I've never seen that.
 
@@ -449,6 +452,8 @@ class ASFHTTPParser(log.Loggable):
                             len(self._packet))
                         buf = self._getDataBuffer(self._packet)
                         self._asfbuffers.append(buf)
+                    elif self._packet_type == self.PACKET_FILLER:
+                        self.debug("Dropping filler packet")
                     elif self._packet_type == self.PACKET_UNKNOWN:
                         # Write out up to 20 bytes for later perusal...
                         outlen = min(len(self._packet), 20)
