@@ -233,7 +233,9 @@ class ASFHTTPParser(log.Loggable):
     PACKET_UNKNOWN = 0
     PACKET_HEADER = 1
     PACKET_DATA = 2
-    PACKET_FILLER = 3
+    PACKET_EOS = 3
+    PACKET_CLEAR = 4
+    PACKET_FILLER = 5
 
     def __init__(self, push):
         # There are two variants on the format. One is used in push mode, one in
@@ -398,6 +400,7 @@ class ASFHTTPParser(log.Loggable):
         return buf
 
     def parseData(self, data):
+        ret = True
         length = len(data)
         offset = 0
         self.log("Received %d byte buffer", length)
@@ -419,6 +422,9 @@ class ASFHTTPParser(log.Loggable):
                     if self._packet[1] == 'H':
                         self.debug("Header packet header received")
                         self._packet_type = self.PACKET_HEADER
+                    elif self._packet[1] == 'C':
+                        self.debug("Clear packet header received")
+                        self._packet_type = self.PACKET_CLEAR
                     elif self._packet[1] == 'D':
                         self.log("Data packet header received")
                         self._packet_type = self.PACKET_DATA
@@ -426,15 +432,11 @@ class ASFHTTPParser(log.Loggable):
                         # We don't parse the contents of this packet currently;
                         # I haven't even looked to see what it contains
                         self.info("EOS packet received, halting")
-                        return False
+                        self._packet_type = self.PACKET_EOS
                     elif self._packet[1] == 'F':
                         # Filler packet received; ignore it.
                         self._packet_type = self.PACKET_FILLER
                     else:
-                        # According to the MPlayer source code, there's
-                        # a 'C' type meaning 'Clear ASF configuration' or 
-                        # something like that, but I've never seen that.
-
                         # We'll just skip over this one...
                         self.warning("Unknown packet type: %s", self._packet[1])
                         self._packet_type = self.PACKET_UNKNOWN
@@ -454,6 +456,11 @@ class ASFHTTPParser(log.Loggable):
                         self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_FILLER:
                         self.debug("Dropping filler packet")
+                    elif self._packet_type == self.PACKET_EOS:
+                        self.debug("Received EOS")
+                        ret = False
+                    elif self._packet_type == self.PACKET_CLEAR:
+                        self.debug("Clear packet? Not sure what to do...")
                     elif self._packet_type == self.PACKET_UNKNOWN:
                         # Write out up to 20 bytes for later perusal...
                         outlen = min(len(self._packet), 20)
@@ -466,7 +473,7 @@ class ASFHTTPParser(log.Loggable):
                     self._bytes_remaining = self.HEADER_BYTES
 
                 self._packet = ""
-        return True
+        return ret
 
     def hasBuffer(self):
         return len(self._asfbuffers) != 0

@@ -1,3 +1,10 @@
+2007-04-19  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	* flumotion/component/producers/wms.py:
+	  Rewrite to handle more cases more correctly.
+	  Handles reconnecting better, and might handle > 2 GB throughput.
+
 2007-04-18  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:

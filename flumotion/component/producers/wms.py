@@ -255,18 +255,8 @@ class WMSRequest(server.Request, log.Loggable):
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
 
-        self._streaming = False
-        self._srcelement = None
-
     def hasHeader(self, header):
         return header.lower() in self.received_headers
-
-    def setStreaming(self):
-        self._streaming = True
-
-    def finish(self):
-        if not self._streaming:
-            server.Request.finish(self)
 
     def process(self):
         # This nasty hack is needed because setHeader() mangles case, which 
@@ -275,7 +265,7 @@ class WMSRequest(server.Request, log.Loggable):
             def capitalize(self):
                 return self
 
-        digester = self.channel.wmsfactory.digester
+        digester = self.channel.factory.digester
         # Pretend to be Windows Media Server, otherwise WME won't connect.
         # Also append a note that we're actually flumotion.
         self.setHeader("Server", "Cougar/9.01.01.3814 "
@@ -316,6 +306,13 @@ class WMSRequest(server.Request, log.Loggable):
 
             ctype = self.getHeader("content-type")
             if ctype == 'application/x-wms-pushsetup':
+                if self.channel.factory.streamingRequest:
+                    self.warning("Already streaming; dropping existing "
+                        "connection")
+                    self.channel.factory.streamingRequest.finish()
+                    self.channel.factory.streamingRequest = None
+                    self.channel.factory.srcelement.resetASFParser()
+
                 if pushId:
                     self.headers["Set-Cookie"] = "push-id=%d" % pushId
                 self.setResponseCode(http.NO_CONTENT)
@@ -323,14 +320,7 @@ class WMSRequest(server.Request, log.Loggable):
                 return
             elif ctype == 'application/x-wms-pushstart':
                 self.debug("Got pushstart!")
-                if self.channel.wmsfactory.streamingRequest:
-                    self.warning("Already streaming; dropping existing "
-                        "connection")
-                    self.channel.wmsfactory.streamingRequest.finish()
-                    self.channel.wmsfactory.srcelement.resetASFParser()
-
-                self.channel.wmsfactory.streamingRequest = self
-                self._srcelement = self.channel.wmsfactory.srcelement
+                self.channel.factory.streamingRequest = None
                 self.finish()
                 return
             else:
@@ -341,35 +331,30 @@ class WMSRequest(server.Request, log.Loggable):
         d.addCallback(authenticated)
         return d
 
-    def dataReceived(self, data):
-        if not self._srcelement:
-            self.warning("Receiving streaming data without a pushstart request")
-            return
-
-        self._srcelement.dataReceived(data)
+    def handleContentChunk(self, data):
+        if self.channel._is_streaming_post:
+            if not self.channel.factory.streamingRequest:
+                self.channel.factory.streamingRequest = self
+            self.channel.factory.srcelement.dataReceived(data)
+        else:
+            return server.Request.handleContentChunk(self, data)
 
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
     def __init__(self):
         http.HTTPChannel.__init__(self)
 
-        self._streaming_request = None
-        self.wmsfactory = None
+        self._is_streaming_post = False
 
-    def rawDataReceived(self, data):
-        # Windows Media Encoder sends this content-length. Use this as a trigger
-        # to switch to our streaming-POST interface
-        if self.length == 2147483647 or self._streaming_request:
-            if not self._streaming_request:
-                self.debug("Got max-length request, switching to streaming POST")
-                self._streaming_request = self.requests[-1]
-                self._streaming_request.setStreaming()
-                self.allContentReceived()
-            self.log("Data received for streaming post request")
-            self._streaming_request.dataReceived(data)
-        else:
-            self.log("Raw data received for non-streaming request")
-            http.HTTPChannel.rawDataReceived(self, data)
+    def allHeadersReceived(self):
+        http.HTTPChannel.allHeadersReceived(self)
+        if self._command == 'POST':
+            self._is_streaming_post = True
+
+    def allContentReceived(self):
+        self._is_streaming_post = False
+
+        http.HTTPChannel.allContentReceived(self)
 
 class WMSFactory(http.HTTPFactory):
     protocol = WMSChannel
@@ -386,7 +371,6 @@ class WMSFactory(http.HTTPFactory):
     def buildProtocol(self, addr):
         channel = http.HTTPFactory.buildProtocol(self, addr)
         channel.requestFactory = self.requestFactory
-        channel.wmsfactory = self
         return channel
 
 class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
