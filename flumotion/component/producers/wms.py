@@ -424,6 +424,9 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
     def do_start(self, *args, **kwargs):
         factory = WMSFactory(self._authenticator, self._srcelement)
+        # TODO: We want to split type into push and pull, with push (already
+        # implemented here) having slave and master modes). See 'notes' file for
+        # some details.
         if self.type == 'slave':
             # Slaved to a porter...
             d1 = feedcomponent.ParseLaunchComponent.do_start(self,

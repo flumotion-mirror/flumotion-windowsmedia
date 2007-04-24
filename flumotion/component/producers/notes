@@ -1,0 +1,31 @@
+Notes on pull-mode:
+
+Connecting to a windows media encoder is a similar protocol to the encoder's push mode, apparently it's called "application/x-mms-framed".
+
+A minimal request that will get the encoder to send data is:
+GET / HTTP/1.0
+User-Agent: NSServer/foobar
+
+The "NSServer" bit is required; it doesn't seem to care what version though.
+We could send something like "NSServer/1.0,Flumotion/0.4.2"
+
+The encoder responds with:
+HTTP/1.0 200 OK
+Server: Rex/9.0.0.3265
+Cache-Control: no-cache
+Pragma: no-cache
+Pragma: client-id=1355421304
+Pragma: features="broadcast,playlist"
+Content-Type: application/x-mms-framed
+
+followed by the content in the $H....$D.... format. Hopefully that part is identical (haven't checked yet) so that we don't have to do anything more at all. It
+turns out that it's similar but not identical...
+The client-id seems to be random; it changes every time.
+
+In pull mode, we connect to the streamer. We should implement timeouts
+so that we can force reconnects to the streamer if data isn't flowing,
+etc.
+In pull mode, the data protocol is marginally different (this is 
+implemented in ASFHTTPParser but minimally tested). Also, we simply
+have a streaming HTTP response; we don't need to worry about 
+reconnecting every 2 GB (do we?) or anything like that.

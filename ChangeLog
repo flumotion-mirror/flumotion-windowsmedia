@@ -1,5 +1,12 @@
 2007-04-24  Michael Smith  <msmith@fluendo.com>
 
+	* flumotion/component/producers/notes:
+	  Notes on implementing pull mode.
+	* flumotion/component/producers/wms.py:
+	  Add a comment
+
+2007-04-24  Michael Smith  <msmith@fluendo.com>
+
 	* flumotion/component/producers/wms.py:
 	  Since WME randomly forgets to send 'opaque', special case this to
 	  send an unauth/stale response, which tricks it into trying again
