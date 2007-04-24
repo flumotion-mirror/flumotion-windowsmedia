@@ -1,3 +1,9 @@
+2007-04-24  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms.py:
+	  Rewrite streaming-post handling. Now correctly handles > 2 GB of
+	  data. Yay!
+
 2007-04-19  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/asfparse.py:

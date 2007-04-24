@@ -142,11 +142,13 @@ class DigestAuth(log.Loggable):
         Handles HTTP Digest authentication, plus some special handling of the
         pushid cookie that windows-media-encoder uses
         """
+        if request.channel._is_authenticated:
+            return (http.OK, pushId, False)
         if pushId in self._pushIds:
             # The encoder sends the actual stream without authenticating.
-            # We permit it to do this once, with the pushId we issued.
+            # We permit it to do this with the pushId we issued.
             if self._pushIds[pushId]:
-                del self._pushIds[pushId]
+                request.channel._is_authenticated = True
                 return (http.OK, pushId, False)
         else:
             pushId = random.randint(1, (1<<31)-1)
@@ -166,6 +168,8 @@ class DigestAuth(log.Loggable):
 
         self.debug("Received attributes: %r", attrs)
         required = ['username', 'realm', 'nonce', 'opaque', 'uri', 'response']
+        # TODO: Sometimes WME doesn't send 'opaque'? Maybe we should just send
+        # 'stale' for this case?
         for r in required:
             if r not in attrs:
                 self.debug("Required attribute %s is missing", r)
@@ -320,8 +324,8 @@ class WMSRequest(server.Request, log.Loggable):
                 return
             elif ctype == 'application/x-wms-pushstart':
                 self.debug("Got pushstart!")
-                self.channel.factory.streamingRequest = None
-                self.finish()
+                # We should now be in streaming-POST mode, so finish() is called
+                # by the channel at the end.
                 return
             else:
                 self.debug("Unknown content-type: %s", ctype)
@@ -332,29 +336,39 @@ class WMSRequest(server.Request, log.Loggable):
         return d
 
     def handleContentChunk(self, data):
-        if self.channel._is_streaming_post:
-            if not self.channel.factory.streamingRequest:
+        if self.channel._streaming_post == self:
+            if self.channel.factory.streamingRequest != self:
                 self.channel.factory.streamingRequest = self
             self.channel.factory.srcelement.dataReceived(data)
         else:
             return server.Request.handleContentChunk(self, data)
 
+    def requestReceived(self, command, path, version):
+        # Can be called in _streaming_post mode twice: once after headers, once
+        # at the end
+        channel = self.channel
+        if channel._streaming_post and channel.length == 0:
+            self.debug("Calling finish() on streaming post request")
+            channel._streaming_post.finish()
+            channel._streaming_post = None
+            return
+        server.Request.requestReceived(self, command, path, version)
+        
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
     def __init__(self):
         http.HTTPChannel.__init__(self)
 
-        self._is_streaming_post = False
+        self._streaming_post = None
+        self._is_authenticated = False
 
     def allHeadersReceived(self):
         http.HTTPChannel.allHeadersReceived(self)
-        if self._command == 'POST':
-            self._is_streaming_post = True
-
-    def allContentReceived(self):
-        self._is_streaming_post = False
-
-        http.HTTPChannel.allContentReceived(self)
+        if self._command == 'POST' and self.length > 0:
+            self.debug("Setting new streaming post request")
+            self._streaming_post = self.requests[-1]
+            self._streaming_post.requestReceived(
+                self._command, self._path, self._version)
 
 class WMSFactory(http.HTTPFactory):
     protocol = WMSChannel
