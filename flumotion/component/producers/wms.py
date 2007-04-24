@@ -168,11 +168,12 @@ class DigestAuth(log.Loggable):
 
         self.debug("Received attributes: %r", attrs)
         required = ['username', 'realm', 'nonce', 'opaque', 'uri', 'response']
-        # TODO: Sometimes WME doesn't send 'opaque'? Maybe we should just send
-        # 'stale' for this case?
         for r in required:
             if r not in attrs:
                 self.debug("Required attribute %s is missing", r)
+                # Sometimes WME doesn't send opaque, so try sending 'stale'
+                if r == 'opaque':
+                    return (http.UNAUTHORIZED, pushId, True)
                 return (http.BAD_REQUEST, pushId, False)
 
         # 'qop' is optional, if sent then cnonce and nc are required.

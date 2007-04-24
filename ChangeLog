@@ -1,6 +1,13 @@
 2007-04-24  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms.py:
+	  Since WME randomly forgets to send 'opaque', special case this to
+	  send an unauth/stale response, which tricks it into trying again
+	  correctly. This code sucks.
+
+2007-04-24  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms.py:
 	  Rewrite streaming-post handling. Now correctly handles > 2 GB of
 	  data. Yay!
 
