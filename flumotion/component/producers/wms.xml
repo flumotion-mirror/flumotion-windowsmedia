@@ -14,14 +14,18 @@
         <property name="mount-point" type="string" 
                   description="The mount point the stream is to be produced on"/>
         <property name="type" type="string"
-                  description="'master' to listen on a port, or 'slave' to slave to a porter (default master)" />
+                  description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
 
         <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
         <property name="secure" type="boolean" description="Whether authentication is done securely" />
 
-        <!-- If type is 'master' (default) -->
+        
+        <!-- If type is 'master' (default) or 'pull'-->
         <property name="port" type="int"
-                  description="Port to listen on (if type is 'master')" />
+                  description="Port to listen on (if type is 'master'), or port to connect to for 'pull' mode" />
+
+        <!-- If type is 'pull' -->
+        <property name="host" type="string" description="Hostname to connect to in pull mode" />
 
         <!-- If type is 'slave' -->
         <property name="porter-socket-path" type="string"

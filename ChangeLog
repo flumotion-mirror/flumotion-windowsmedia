@@ -1,3 +1,14 @@
+2007-04-25  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Fix buffer generation in pull mode; don't include 8-byte header.
+
+	* flumotion/component/producers/wms.py:
+	  Implement pull mode.
+
+	* flumotion/component/producers/wms.xml:
+	  Add 'host' property; expand docs for pull mode.
+
 2007-04-24  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/notes:

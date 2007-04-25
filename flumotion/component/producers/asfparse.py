@@ -180,9 +180,9 @@ class ASFPacketParser(log.Loggable):
             self._off += replicateddatalength 
         
         streamNumber = streamNumberByte & 0x7f
-        if streamNumber not in self._asfinfo.streams:
-            raise InvalidBitstreamException(
-                "Stream number %d unknown" % streamNumber)
+        #if streamNumber not in self._asfinfo.streams:
+        #    raise InvalidBitstreamException(
+        #        "Stream number %d unknown" % streamNumber)
 
         # Mark as keyframe if any payload within this packet is a keyframe.
         # A payload is considered a keyframe if it's the first payload for this
@@ -192,8 +192,9 @@ class ASFPacketParser(log.Loggable):
         self.hasKeyframe = self.hasKeyframe or kf
         self.log("Payload hasKeyframe: %r", self.hasKeyframe)
 
-        self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
-            mediaObjectNumber
+        if streamNumber in self._asfinfo.streams:
+            self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
+                mediaObjectNumber
 
         if hasPayloadLength:
             payloadLength = self.readLength(self._payloadlengthtype)
@@ -244,6 +245,7 @@ class ASFHTTPParser(log.Loggable):
         # header starts with the same 4 bytes, then has an extra 8 bytes that 
         # I don't know the meaning of (but ignoring them seems to work ok)
         self._pushmode = push
+        self.debug("Initialised in %s", push and "push" or "pull")
         self.reset()
 
     def reset(self):
@@ -285,6 +287,8 @@ class ASFHTTPParser(log.Loggable):
             raise InvalidBitstreamException(
                 "Duplicate definition of stream %d" % (streamNumber))
 
+        self.debug("Parsed stream properties object for stream %d", 
+            streamNumber)
         self._asfinfo.streams[streamNumber] = ASFStreamInfo()
 
     def _parseFilePropertiesObject(self, buf, offset, length):
@@ -355,7 +359,11 @@ class ASFHTTPParser(log.Loggable):
                 self.debug("Unrecognised top-level header: %s", _GUIDtoString(guid))
             offset = offset + length
 
-        headerBuf = gst.Buffer(buf)
+        if self._pushmode:
+            headerBuf = gst.Buffer(buf)
+        else:
+            headerBuf = gst.Buffer(buf[8:])
+
         headerBuf.timestamp = gst.CLOCK_TIME_NONE
         headerBuf.duration = gst.CLOCK_TIME_NONE
         headerBuf.flag_set(gst.BUFFER_FLAG_IN_CAPS)
@@ -386,7 +394,10 @@ class ASFHTTPParser(log.Loggable):
             pad = '\0' * (pp.packetLen - len(data))
             data = data + pad
 
-        buf = gst.Buffer(data)
+        if self._pushmode:
+            buf = gst.Buffer(data)
+        else:
+            buf = gst.Buffer(data[8:])
         buf.caps = self._caps
 
         buf.timestamp = pp.timestampMS * gst.MSECOND
@@ -448,6 +459,9 @@ class ASFHTTPParser(log.Loggable):
                         self.debug("Received ASF header, length %d", 
                             len(self._packet))
                         buf = self._getHeaderBuffer(self._packet)
+                        self.debug("Appending header buffer of length %d",
+                            len(buf))
+                        self.debug("Buf starts with %x, %x, %x", ord(buf[0]), ord(buf[1]), ord(buf[2]))
                         self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_DATA:
                         self.log("Received ASF data, length %d", 

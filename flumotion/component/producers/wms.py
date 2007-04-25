@@ -16,7 +16,8 @@ import gst
 import time
 import random
 
-from twisted.internet import reactor, defer, error
+from twisted.internet import reactor, defer, error, protocol
+from twisted.protocols import basic
 from twisted.web import resource, server, http
 from twisted.cred import credentials
 
@@ -371,7 +372,7 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
             self._streaming_post.requestReceived(
                 self._command, self._path, self._version)
 
-class WMSFactory(http.HTTPFactory):
+class WMSPushFactory(http.HTTPFactory):
     protocol = WMSChannel
     requestFactory = WMSRequest
 
@@ -388,15 +389,64 @@ class WMSFactory(http.HTTPFactory):
         channel.requestFactory = self.requestFactory
         return channel
 
+class WMSPullProtocol(basic.LineReceiver):
+    timeout = 30
+    factory = None
+
+    def connectionMade(self):
+        self.factory.resetDelay()
+
+        self._headers = []
+        self._lastReceived = time.time()
+
+        self.writeRequest()
+
+        self._timeoutCL = reactor.callLater(self.timeout, 
+            self._timeoutConnection)
+
+    def writeRequest(self):
+        self.transport.write("GET / HTTP/1.0\r\n")
+        self.transport.write("User-Agent: NSServer/1.0,Flumotion/0.0\r\n")
+        self.transport.write("\r\n")
+
+    def lineReceived(self, line):
+        if line == '':
+            # Headers done...
+            self.factory.srcelement.resetASFParser()
+            self.setRawMode()
+        else:
+            self._headers.append(line) # No parsing yet... 
+
+    def rawDataReceived(self, data):
+        self._lastReceived = time.time()
+
+        self.factory.srcelement.dataReceived(data)
+
+    def _timeoutConnection(self):
+        now = time.time()
+        if now - self._lastReceived > self.timeout:
+            self.transport.loseConnection()
+            self._timeoutCL = None
+        else:
+            self._timeoutCL = reactor.callLater(self.timeout, 
+                self._timeoutConnection)
+
+class WMSPullFactory(protocol.ReconnectingClientFactory):
+    protocol = WMSPullProtocol
+
+    def __init__(self, srcelement):
+        self.srcelement = srcelement
+
+    def buildProtocol(self, addr):
+        p = protocol.ReconnectingClientFactory.buildProtocol(self, addr)
+        p.factory = self
+        return p
+
 class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     """
     A component to act (to a Windows Media Encoder client in push mode) like
     a Windows Media Server, in order to accept an ASF stream.
     """
-
-    def init(self):
-        self._srcelement = asfparse.ASFSrc("asfsrc")
-
     def do_check(self):
         props = self.config['properties']
 
@@ -420,15 +470,27 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         if not props.get('secure', True):
             self._authenticator.enableReplayAttacks()
 
+        pushmode = props.get('type', 'master') != 'pull'
+        self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
+
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 
     def do_start(self, *args, **kwargs):
-        factory = WMSFactory(self._authenticator, self._srcelement)
         # TODO: We want to split type into push and pull, with push (already
         # implemented here) having slave and master modes). See 'notes' file for
         # some details.
+        if self.type == 'pull':
+            host = self.config['properties'].get('host', 'localhost')
+            port = self.config['properties'].get('port', 80)
+            factory = WMSPullFactory(self._srcelement)
+
+            reactor.connectTCP(host, port, factory)
+            return feedcomponent.ParseLaunchComponent.do_start(self,
+                *args, **kwargs)
+
         if self.type == 'slave':
             # Slaved to a porter...
+            factory = WMSPushFactory(self._authenticator, self._srcelement)
             d1 = feedcomponent.ParseLaunchComponent.do_start(self,
                 *args, **kwargs)
 
@@ -450,6 +512,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             return defer.DeferredList([d1, d2])
         else:
             # Streamer is standalone.
+            factory = WMSPushFactory(self._authenticator, self._srcelement)
             try:
                 self.debug('Listening on %d' % self.port)
                 reactor.listenTCP(self.port, factory)
