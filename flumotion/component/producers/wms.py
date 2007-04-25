@@ -392,6 +392,7 @@ class WMSPushFactory(http.HTTPFactory):
 class WMSPullProtocol(basic.LineReceiver):
     timeout = 30
     factory = None
+    _timeoutCL = None
 
     def connectionMade(self):
         self.factory.resetDelay()
@@ -403,6 +404,10 @@ class WMSPullProtocol(basic.LineReceiver):
 
         self._timeoutCL = reactor.callLater(self.timeout, 
             self._timeoutConnection)
+
+    def connectionLost(self, reason):
+        if self._timeoutCL:
+            self._timeoutCL.cancel()        
 
     def writeRequest(self):
         self.transport.write("GET / HTTP/1.0\r\n")
@@ -476,9 +481,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 
     def do_start(self, *args, **kwargs):
-        # TODO: We want to split type into push and pull, with push (already
-        # implemented here) having slave and master modes). See 'notes' file for
-        # some details.
         if self.type == 'pull':
             host = self.config['properties'].get('host', 'localhost')
             port = self.config['properties'].get('port', 80)
@@ -488,7 +490,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             return feedcomponent.ParseLaunchComponent.do_start(self,
                 *args, **kwargs)
 
-        if self.type == 'slave':
+        elif self.type == 'slave':
             # Slaved to a porter...
             factory = WMSPushFactory(self._authenticator, self._srcelement)
             d1 = feedcomponent.ParseLaunchComponent.do_start(self,

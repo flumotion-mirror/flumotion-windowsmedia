@@ -1,5 +1,11 @@
 2007-04-25  Michael Smith  <msmith@fluendo.com>
 
+	* flumotion/component/producers/wms.py:
+	  Handle timeout callLaters correctly.
+	  Update some comments.
+
+2007-04-25  Michael Smith  <msmith@fluendo.com>
+
 	* flumotion/component/producers/asfparse.py:
 	  Fix buffer generation in pull mode; don't include 8-byte header.
 
