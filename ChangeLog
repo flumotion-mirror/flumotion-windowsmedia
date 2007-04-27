@@ -1,5 +1,11 @@
 2007-04-27  Michael Smith <msmith@fluendo.com>
 
+	* README:
+	  Write up some notes on using this, advantages/disadvantages of
+	  push/pull modes, etc.
+
+2007-04-27  Michael Smith <msmith@fluendo.com>
+
 	* flumotion/component/producers/asfparse.py:
 	  Streams are allowed to be declared only in the extended stream
 	  properties object, not in the stream properties object, so handle

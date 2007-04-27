@@ -1,0 +1,50 @@
+Notes on using this component:
+------------------------------
+
+The first choice is to select between push mode and pull mode. Briefly:
+
+Push mode:
+  The encoder is started, and connects to the server (this component). The 
+  server authenticates the connection, then starts providing the stream.
+  Advantages:
+    - it's an outgoing connection from the client site, so you're relatively 
+      unlikely to encounter firewall issues.
+    - it's properly authenticated.
+  Disadvantages:
+    - Should a network error occur, the encoder must be restarted, which 
+      requires manual intervention on the windows machine.
+
+Pull mode:
+  The server pulls the stream from the encoder. In fact, the server will, after
+  starting, continually try to connect (with a frequency that is backed off
+  exponentially up to some limit). Once connected, it provides the stream.
+  If it's ever disconnected, it'll attempt to get the stream again.
+  Advantages:
+    - Should a transient network failure occur, we can recover completely 
+      automatically - the server side will attempt to reconnect periodically.
+  Disadvantages:
+    - Because we have to connect to a windows media encoder running on a client
+      site, we will typically have to negotiate appropriate firewall rules.
+    - The encoder does not authenticate incoming connections, at all!
+    - This mode is not yet well tested.
+
+Configuration:
+
+Pull mode: 
+
+Configure the component with the host of the machine doing the encoding, 
+and the port selected in WME. Configure type as 'pull'.
+
+Push mode: 
+
+Here, we do authentication, so an appropriate bouncer must be configured.
+Use a bouncer of type "http-digest-bouncer".
+Configure type as 'slave' or 'master' depending on whether you want to act
+through a porter or not. ('slave' is not yet tested).
+
+You'll need an auth file for the bouncer, entries for this can be generated
+using the httpdigesthasher.py tool from flumotion SVN trunk:
+  flumotion/tools/httpdigesthasher.py username password >> /path/to/auth.db
+
+
+  
