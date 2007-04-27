@@ -1,3 +1,11 @@
+2007-04-27  Michael Smith <msmith@fluendo.com>
+
+	* flumotion/component/producers/asfparse.py:
+	  Streams are allowed to be declared only in the extended stream
+	  properties object, not in the stream properties object, so handle
+	  that. Reenable checking that packets are for declared streams.
+	  Fix a wrong debug message.
+
 2007-04-25  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms.py:

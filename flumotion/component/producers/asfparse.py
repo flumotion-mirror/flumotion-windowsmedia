@@ -180,21 +180,20 @@ class ASFPacketParser(log.Loggable):
             self._off += replicateddatalength 
         
         streamNumber = streamNumberByte & 0x7f
-        #if streamNumber not in self._asfinfo.streams:
-        #    raise InvalidBitstreamException(
-        #        "Stream number %d unknown" % streamNumber)
+        if streamNumber not in self._asfinfo.streams:
+            raise InvalidBitstreamException(
+                "Stream number %d unknown" % streamNumber)
 
         # Mark as keyframe if any payload within this packet is a keyframe.
         # A payload is considered a keyframe if it's the first payload for this
         # media object (i.e. has offset into media object set to 0)
         kf = (streamNumberByte & 0x80) and offsetIntoMediaObject == 0
 
-        self.hasKeyframe = self.hasKeyframe or kf
+        self.hasKeyframe = self.hasKeyframe or bool(kf)
         self.log("Payload hasKeyframe: %r", self.hasKeyframe)
 
-        if streamNumber in self._asfinfo.streams:
-            self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
-                mediaObjectNumber
+        self._asfinfo.streams[streamNumber].prevMediaObjectNumber = \
+            mediaObjectNumber
 
         if hasPayloadLength:
             payloadLength = self.readLength(self._payloadlengthtype)
@@ -283,10 +282,6 @@ class ASFHTTPParser(log.Loggable):
         flags = _readUInt16(buf, offset + 48)
         streamNumber = flags & 0x7f
 
-        if streamNumber in self._asfinfo.streams:
-            raise InvalidBitstreamException(
-                "Duplicate definition of stream %d" % (streamNumber))
-
         self.debug("Parsed stream properties object for stream %d", 
             streamNumber)
         self._asfinfo.streams[streamNumber] = ASFStreamInfo()
@@ -309,11 +304,17 @@ class ASFHTTPParser(log.Loggable):
         self.debug("Parsing ExtendedStreamPropertiesObject")
 
         flags = _readUInt32(buf, offset+44)
+        streamNumber = _readUInt16(buf, offset+48)
         nocleanpointflag = flags & 0x04
         self._asfinfo.hasKeyframes = self._asfinfo.hasKeyframes or \
             (not nocleanpointflag)
         self.debug("Parsed nocleanpoint flag: hasKeyframes now %r", 
             self._asfinfo.hasKeyframes)
+
+        self.debug("Parsed extended stream properties object for stream %d", 
+            streamNumber)
+        if streamNumber not in self._asfinfo.streams:
+            self._asfinfo.streams[streamNumber] = ASFStreamInfo()
 
     def _parseHeaderExtensionObject(self, buf, offset, length):
         if length < 22:
@@ -351,7 +352,7 @@ class ASFHTTPParser(log.Loggable):
 
             if guid == GUID.ASF_HEADER_FILE_PROPERTIES_OBJECT:
                 self._parseFilePropertiesObject(buf, offset, length)
-            if guid == GUID.ASF_HEADER_STREAM_PROPERTIES_OBJECT:
+            elif guid == GUID.ASF_HEADER_STREAM_PROPERTIES_OBJECT:
                 self._parseStreamPropertiesObject(buf, offset, length)
             elif guid == GUID.ASF_HEADER_EXTENSION_OBJECT:
                 self._parseHeaderExtensionObject(buf, offset, length)
