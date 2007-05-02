@@ -30,7 +30,9 @@ class WMAEncoder(feedcomponent.ParseLaunchComponent):
 
     def get_pipeline_string(self, properties):
         if properties.has_key('drop-probability'):
-            return "identity drop-probablity=%f silent=TRUE ! audioconvert ! fluwmaenc name=encoder" % properties['drop-probability']
+            return "identity drop-probability=%f silent=TRUE ! " \
+                "audioconvert ! " \
+                "fluwmaenc name=encoder" % properties['drop-probability']
 
         return "audioconvert ! fluwmaenc name=encoder"
 

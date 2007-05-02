@@ -1,3 +1,9 @@
+2007-05-02  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/wma/wma.py
+	  (WMAEncoder.get_pipeline_string):
+	  Fix spelling.  Should also make the component work.
+
 2007-04-27  Michael Smith <msmith@fluendo.com>
 
 	* README:
