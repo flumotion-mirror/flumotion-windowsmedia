@@ -2,7 +2,7 @@
   <components>
     <component type="windows-media-server-producer"
                base="flumotion/component/producers">
-      <source location="flumotion.component.producers.wms"/>
+      <source location="flumotion.component.producers.wms.wms"/>
       <feeder name="default"/>
 
       <entries>
@@ -39,8 +39,8 @@
       </properties>
     </component>
     <component type="http-digest-bouncer"
-               base="flumotion/component/producers">
-      <source location="flumotion.component.producers.digest"/>
+               base="flumotion/component/producers/wms">
+      <source location="flumotion.component.producers.wms.digest"/>
 
       <entries>
         <entry type="component" location="digest.py"
@@ -62,7 +62,8 @@
         </dependencies>
 
         <directories>
-            <directory name="flumotion/component/producers">
+            <directory name="flumotion/component/producers/wms">
+                <filename location="__init__.py" />
                 <filename location="wms.py" />
                 <filename location="asfparse.py" />
                 <filename location="queue.py" />
