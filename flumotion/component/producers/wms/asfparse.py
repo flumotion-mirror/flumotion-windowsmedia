@@ -14,7 +14,7 @@
 
 from flumotion.common import log
 
-from flumotion.component.producers import queue
+from flumotion.component.producers.wms import queue
 
 import gst
 import gobject

@@ -1,3 +1,9 @@
+2007-05-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/producers/wms/asfparse.py:
+	* flumotion/component/producers/wms/wms.py:
+	  Fix sibling-like-but-not-quite imports.  Fixes #864.
+
 2007-05-02  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma.py

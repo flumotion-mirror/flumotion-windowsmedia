@@ -28,7 +28,7 @@ from flumotion.twisted import fdserver
 from flumotion.component.misc.porter import porterclient
 from flumotion.component.component import moods
 
-from flumotion.component.producers import asfparse
+from flumotion.component.producers.wms import asfparse
 
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-windowsmedia')
