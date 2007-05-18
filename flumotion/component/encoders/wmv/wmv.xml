@@ -11,27 +11,58 @@
       <entries>
         <entry type="component" location="wmv.py"
                function="WMVEncoder" />
+         <entry type="admin/gtk" location="admin_gtk.py"
+               function="WMVEncoderAdminGtk" />
       </entries>
 
       <properties>
         <property name="bitrate" type="int" />
         <property name="version" type="int" />
+        <property name="complexity" type="int" />
+        <property name="sharpness" type="int" />
+        <property name="key-frame-distance" type="int" />
+        <property name="buffer-delay" type="int" />
       </properties>
 
     </component>
   </components>
 
   <bundles>
+    <bundle project="windowsmedia" name="wmv-base">
+        <dependencies>
+           <dependency name="component-base" />
+       </dependencies>
+
+       <directories>
+           <directory name="flumotion/component/encoders/wmv">
+               <filename location="__init__.py" />
+           </directory>
+       </directories>
+    </bundle>
 
     <bundle project="windowsmedia" name="wmv-component">
         <dependencies>
             <dependency name="component" />
+            <dependency name="wmv-base" />
         </dependencies>
 
         <directories>
             <directory name="flumotion/component/encoders/wmv">
-                <filename location="__init__.py" />
                 <filename location="wmv.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="wmv-admin-gtk">
+        <dependencies>
+            <dependency name="wmv-base" />
+            <dependency name="base-admin-gtk" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/encoders/wmv">
+               <filename location="admin_gtk.py" />
+               <filename location="wmv.glade" />
             </directory>
         </directories>
     </bundle>
