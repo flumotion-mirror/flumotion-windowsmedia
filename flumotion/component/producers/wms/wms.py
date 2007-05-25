@@ -438,6 +438,7 @@ class WMSPullProtocol(basic.LineReceiver):
 
 class WMSPullFactory(protocol.ReconnectingClientFactory):
     protocol = WMSPullProtocol
+    maxDelay = 300 # Back off up to 5 minutes
 
     def __init__(self, srcelement):
         self.srcelement = srcelement
