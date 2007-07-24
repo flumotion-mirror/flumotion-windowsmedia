@@ -23,6 +23,7 @@ from twisted.cred import credentials
 
 from flumotion.component import feedcomponent
 from flumotion.common import log, errors, messages, keycards
+from flumotion.common.planet import moods
 
 from flumotion.twisted import fdserver
 from flumotion.component.misc.porter import porterclient
@@ -482,6 +483,15 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 
     def do_start(self, *args, **kwargs):
+
+        # Watch for data flow through identity to turn hungry/happy as 
+        # appropriate
+        self._inactivatedByPadMonitor = False
+        identity = self.pipeline.get_by_name("identity")
+        self.debug("Adding pad monitor")
+        self._padMonitor = PadMonitor(self, identity.get_pad('src'), 
+            'identity-source')
+            
         if self.type == 'pull':
             host = self.config['properties'].get('host', 'localhost')
             port = self.config['properties'].get('port', 80)
@@ -530,16 +540,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                 self.setMood(moods.sad)
                 return defer.fail(errors.ComponentStartHandledError(t))
 
-        # Watch for data flow through identity to turn hungry/happy as 
-        # appropriate
-        identity = self.pipeline.get_by_name("identity")
-        self.attachPadMonitor(identity.get_pad('src'), "identity-source")
-            
-        reactor.listenTCP(8888, factory)
-
-        return feedcomponent.ParseLaunchComponent.do_start(self, *args, 
-            **kwargs)
-
     def do_stop(self):
         if self.type == 'slave' and self._pbclient:
             d1 = self._pbclient.deregisterPath(self.mountPoint)
@@ -575,4 +575,102 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         self.mountPoint = properties.get('mount-point', '/')
         if not self.mountPoint.startswith('/'):
             self.mountPoint = '/' + self.mountPoint
+
+    def _setPadMonitorActive(self, name):
+        if self._inactivatedByPadMonitor:
+            self.setMood(moods.happy)
+
+    def _setPadMonitorInactive(self, name):
+        self.setMood(moods.hungry)
+        self._inactivatedByPadMonitor = True
+
+class PadMonitor(log.Loggable):
+    PAD_MONITOR_PROBE_FREQUENCY = 5.0
+    PAD_MONITOR_TIMEOUT = PAD_MONITOR_PROBE_FREQUENCY * 2.5
+
+    def __init__(self, component, pad, name):
+        self._last_data_time = 0
+        self._component = component
+        self._pad = pad
+        self._name = name
+        self._active = False
+
+        # This dict sillyness is because python's dict operations are atomic
+        # w.r.t. the GIL.
+        self._probe_id = {}
+        self._add_probe_dc = None
+
+        self._add_flow_probe()
+
+        self._check_flow_dc = reactor.callLater(self.PAD_MONITOR_TIMEOUT,
+            self._check_flow_timeout)
+
+    def isActive(self):
+        return self._active
+
+    def detach(self):
+        probe_id = self._probe_id.pop("id", None)
+        if probe_id:
+            self._pad.remove_buffer_probe(probe_id)
+
+        if self._add_probe_dc:
+            self._add_probe_dc.cancel()
+            self._add_probe_dc = None
+
+        if self._check_flow_dc:
+            self._check_flow_dc.cancel()
+            self._check_flow_dc = None
+        
+    def _add_flow_probe(self):
+        self._probe_id['id'] = self._pad.add_buffer_probe(
+            self._flow_watch_probe_cb)
+        self._add_probe_dc = None
+
+    def _add_flow_probe_later(self):
+        self._add_probe_dc = reactor.callLater(self.PAD_MONITOR_PROBE_FREQUENCY,
+            self._add_flow_probe)
+
+    def _flow_watch_probe_cb(self, pad, buffer):
+        self._last_data_time = time.time()
+        self.debug("Buffer probe!")
+
+        id = self._probe_id.pop("id", None)
+        if id:
+            # This will be None only if detach() has been called.
+            self._pad.remove_buffer_probe(id)
+
+            reactor.callFromThread(self._add_flow_probe_later)
+
+            # Data received! Return to happy ASAP:
+            reactor.callFromThread(self._check_flow_timeout_now)
+
+        return True
+
+    def _check_flow_timeout_now(self):
+        self._check_flow_dc.cancel()
+        self._check_flow_timeout()
+        
+    def _check_flow_timeout(self):
+        self._check_flow_dc = None
+
+        now = time.time()
+
+        self.log("Checking flow timeout. now %r, last seen data at %r", now, self._last_data_time)
+
+        if self._last_data_time > 0:
+            delta = now - self._last_data_time
+
+            if self._active and delta > self.PAD_MONITOR_TIMEOUT:
+                self.info("No data received on pad for > %r seconds, setting "
+                    "to hungry", self.PAD_MONITOR_TIMEOUT)
+
+                self._component._setPadMonitorInactive(self._name)
+                self._active = False
+            elif not self._active and delta < self.PAD_MONITOR_TIMEOUT:
+                self.info("Receiving data again, flow active")
+                self._component._setPadMonitorActive(self._name)
+                self._active = True
+
+        self._check_flow_dc = reactor.callLater(self.PAD_MONITOR_TIMEOUT,
+            self._check_flow_timeout)
 

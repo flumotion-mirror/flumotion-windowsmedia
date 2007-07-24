@@ -1,5 +1,14 @@
 2007-07-24  Michael Smith <msmith@fluendo.com>
 
+	* flumotion/component/producers/wms/asfparse.py:
+	  If your gstreamer version is too old, raise an exception.
+
+	* flumotion/component/producers/wms/wms.py:
+	  Add a private version of pad monitoring code that works for
+	  platform-3 version. 
+
+2007-07-24  Michael Smith <msmith@fluendo.com>
+
 	* flumotion/component/producers/wms/wms.py:
 	  Use the pad monitor functionality added to trunk to watch that
 	  we're receiving data from the windows media encoder. Turn hungry if

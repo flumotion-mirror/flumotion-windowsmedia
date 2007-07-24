@@ -12,7 +12,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.common import log
+from flumotion.common import log, errors
 
 from flumotion.component.producers.wms import queue
 
@@ -375,7 +375,7 @@ class ASFHTTPParser(log.Loggable):
         try:
             self._caps[0]['streamheader'] = (headerBuf,)
         except:
-            return False
+            raise errors.GStreamerError("gst-python is too old")
 
         headerBuf.caps = self._caps
 
