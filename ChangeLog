@@ -1,3 +1,10 @@
+2007-07-24  Michael Smith <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms/wms.py:
+	  Use the pad monitor functionality added to trunk to watch that
+	  we're receiving data from the windows media encoder. Turn hungry if
+	  we don't.
+
 2007-05-25  Michael Smith <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms/wms.py:

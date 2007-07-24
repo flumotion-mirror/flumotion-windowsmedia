@@ -529,6 +529,11 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                 self.addMessage(m)
                 self.setMood(moods.sad)
                 return defer.fail(errors.ComponentStartHandledError(t))
+
+        # Watch for data flow through identity to turn hungry/happy as 
+        # appropriate
+        identity = self.pipeline.get_by_name("identity")
+        self.attachPadMonitor(identity.get_pad('src'), "identity-source")
             
         reactor.listenTCP(8888, factory)
 
