@@ -1,3 +1,8 @@
+2007-07-25  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/wmv/Makefile.am:
+	  Actually dist the UI files so the manager starts up correctly.
+
 2007-07-24  Michael Smith <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms/asfparse.py:

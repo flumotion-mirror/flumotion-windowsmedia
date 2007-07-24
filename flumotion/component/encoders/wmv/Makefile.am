@@ -1,8 +1,9 @@
 include $(top_srcdir)/common/python.mk
 
-component_PYTHON = __init__.py wmv.py
+component_PYTHON = __init__.py wmv.py admin_gtk.py
 componentdir = $(libdir)/flumotion/python/flumotion/component/encoders/wmv
 component_DATA = \
+	wmv.glade \
 	wmv.xml
 
 clean-local:
