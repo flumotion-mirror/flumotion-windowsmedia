@@ -1,5 +1,11 @@
 2007-07-25  Michael Smith <msmith@fluendo.com>
 
+	* flumotion/component/producers/wms/wms.xml:
+	  Copying and pasting a bug doesn't make it go away: bool, not
+	  boolean.
+
+2007-07-25  Michael Smith <msmith@fluendo.com>
+
 	* flumotion/component/producers/wms/asfparse.py:
 	* flumotion/component/producers/wms/wms.py:
 	* flumotion/component/producers/wms/wms.xml:

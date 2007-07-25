@@ -17,9 +17,9 @@
                   description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
 
         <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
-        <property name="secure" type="boolean" description="Whether authentication is done securely" />
+        <property name="secure" type="bool" description="Whether authentication is done securely" />
 
-        <property name="ignore-keyframes" type="boolean" description="Treat all data as keyframes, ignoring markers in the stream"/>
+        <property name="ignore-keyframes" type="bool" description="Treat all data as keyframes, ignoring markers in the stream"/>
 
 
         
