@@ -479,6 +479,8 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
         pushmode = props.get('type', 'master') != 'pull'
         self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
+        if props.get("ignore-keyframes", False):
+            self._srcelement.asfparser._obeyHasKeyframesFlag = False
 
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 

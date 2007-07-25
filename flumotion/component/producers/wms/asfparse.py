@@ -247,6 +247,8 @@ class ASFHTTPParser(log.Loggable):
         self.debug("Initialised in %s", push and "push" or "pull")
         self.reset()
 
+        self._obeyHasKeyframesFlag = True
+
     def reset(self):
         self._http_parser_state = self.STATE_HEADER
         self._bytes_remaining = self.HEADER_BYTES
@@ -403,7 +405,8 @@ class ASFHTTPParser(log.Loggable):
 
         buf.timestamp = pp.timestampMS * gst.MSECOND
         buf.duration = pp.durationMS * gst.MSECOND
-        if self._asfinfo.hasKeyframes and not pp.hasKeyframe:
+        if self._obeyHasKeyframesFlag and self._asfinfo.hasKeyframes \
+                and not pp.hasKeyframe:
             self.log("Setting delta unit")
             buf.flag_set(gst.BUFFER_FLAG_DELTA_UNIT)
         else:
