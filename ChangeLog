@@ -1,3 +1,14 @@
+2007-07-26  Michael Smith <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms/asfparse.py:
+	* flumotion/component/producers/wms/wms.py:
+	* flumotion/component/producers/wms/wms.xml:
+	  Refactor keyframe detection logic. Now audio streams are assumed to
+	  not contain keyframes.
+	  Deprecate (and stop using) emergency hack from last night. The
+	  property is still declared in the registry though, so configs won't
+	  stop working.
+
 2007-07-25  Michael Smith <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms/wms.xml:

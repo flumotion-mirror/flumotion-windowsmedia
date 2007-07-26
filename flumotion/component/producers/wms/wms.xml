@@ -19,10 +19,8 @@
         <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
         <property name="secure" type="bool" description="Whether authentication is done securely" />
 
-        <property name="ignore-keyframes" type="bool" description="Treat all data as keyframes, ignoring markers in the stream"/>
+        <property name="ignore-keyframes" type="string" description="Deprecated; has no effect"/>
 
-
-        
         <!-- If type is 'master' (default) or 'pull'-->
         <property name="port" type="int"
                   description="Port to listen on (if type is 'master'), or port to connect to for 'pull' mode" />

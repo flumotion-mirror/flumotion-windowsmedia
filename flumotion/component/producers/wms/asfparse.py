@@ -33,6 +33,8 @@ class GUID:
         "\xb5\x03\xbf\x5f\x2e\xa9\xcf\x11\x8e\xe3\x00\xc0\x0c\x20\x53\x65"
     ASF_EXTENDED_STREAM_PROPERTIES_OBJECT = \
         "\xcb\xa5\xe6\x14\x72\xc6\x32\x43\x83\x99\xa9\x69\x52\x06\x5b\x5a"
+    ASF_AUDIO_MEDIA = \
+        "\x40\x9e\x69\xf8\x4d\x5b\xcf\x11\xa8\xfd\x00\x80\x5f\x5c\x44\x2b"
 
 def _GUIDtoString(str):
     # Use the format that fluasfguids.c uses for easier comparison...
@@ -209,8 +211,10 @@ class ASFPacketParser(log.Loggable):
 
 class ASFStreamInfo(object):
     def __init__(self):
-        # We don't yet actually read any per-stream information out
-        pass
+        self.nocleanpointflag = False
+        self.isAudio = False
+
+        self.hasKeyframes = False
 
 class ASFInfo(object):
     def __init__(self):
@@ -246,8 +250,6 @@ class ASFHTTPParser(log.Loggable):
         self._pushmode = push
         self.debug("Initialised in %s", push and "push" or "pull")
         self.reset()
-
-        self._obeyHasKeyframesFlag = True
 
     def reset(self):
         self._http_parser_state = self.STATE_HEADER
@@ -286,7 +288,15 @@ class ASFHTTPParser(log.Loggable):
 
         self.debug("Parsed stream properties object for stream %d", 
             streamNumber)
-        self._asfinfo.streams[streamNumber] = ASFStreamInfo()
+        if streamNumber not in self._asfinfo.streams:
+            self._asfinfo.streams[streamNumber] = ASFStreamInfo()
+        info = self._asfinfo.streams[streamNumber]
+
+        type = self._readType(buf, offset+0)
+        info.isAudio = type == GUID.ASF_AUDIO_MEDIA
+        self.debug("Stream is audio: %r, type %s", info.isAudio, 
+            _GUIDtoString(type))
+        info.hasKeyframes = (not info.nocleanpointflag) and (not info.isAudio)
 
     def _parseFilePropertiesObject(self, buf, offset, length):
         if length != 80:
@@ -308,15 +318,18 @@ class ASFHTTPParser(log.Loggable):
         flags = _readUInt32(buf, offset+44)
         streamNumber = _readUInt16(buf, offset+48)
         nocleanpointflag = flags & 0x04
-        self._asfinfo.hasKeyframes = self._asfinfo.hasKeyframes or \
-            (not nocleanpointflag)
-        self.debug("Parsed nocleanpoint flag: hasKeyframes now %r", 
-            self._asfinfo.hasKeyframes)
+        resendlivecleanpointsflag = flags & 0x08
+        self.debug("Parsed flags: nocleanpoint %r, resendlivecleanpoints %r", 
+            bool(nocleanpointflag), bool(resendlivecleanpointsflag))
 
         self.debug("Parsed extended stream properties object for stream %d", 
             streamNumber)
         if streamNumber not in self._asfinfo.streams:
             self._asfinfo.streams[streamNumber] = ASFStreamInfo()
+        info = self._asfinfo.streams[streamNumber]
+
+        info.nocleanpointflag = nocleanpointflag
+        info.hasKeyframes = (not info.nocleanpointflag) and (not info.isAudio)
 
     def _parseHeaderExtensionObject(self, buf, offset, length):
         if length < 22:
@@ -362,6 +375,12 @@ class ASFHTTPParser(log.Loggable):
                 self.debug("Unrecognised top-level header: %s", _GUIDtoString(guid))
             offset = offset + length
 
+        # Do we have keyframes anywhere?
+        for info in self._asfinfo.streams.values():
+            if info.hasKeyframes:
+                self._asfinfo.hasKeyframes = True
+                self.debug("Stream contains keyframes")
+
         if self._pushmode:
             headerBuf = gst.Buffer(buf)
         else:
@@ -405,8 +424,7 @@ class ASFHTTPParser(log.Loggable):
 
         buf.timestamp = pp.timestampMS * gst.MSECOND
         buf.duration = pp.durationMS * gst.MSECOND
-        if self._obeyHasKeyframesFlag and self._asfinfo.hasKeyframes \
-                and not pp.hasKeyframe:
+        if self._asfinfo.hasKeyframes and not pp.hasKeyframe:
             self.log("Setting delta unit")
             buf.flag_set(gst.BUFFER_FLAG_DELTA_UNIT)
         else:

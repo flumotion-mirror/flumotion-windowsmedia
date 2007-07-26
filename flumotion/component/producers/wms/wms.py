@@ -479,8 +479,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
         pushmode = props.get('type', 'master') != 'pull'
         self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
-        if props.get("ignore-keyframes", False):
-            self._srcelement.asfparser._obeyHasKeyframesFlag = False
 
         return feedcomponent.ParseLaunchComponent.do_setup(self)
 
@@ -634,7 +632,6 @@ class PadMonitor(log.Loggable):
 
     def _flow_watch_probe_cb(self, pad, buffer):
         self._last_data_time = time.time()
-        self.debug("Buffer probe!")
 
         id = self._probe_id.pop("id", None)
         if id:
