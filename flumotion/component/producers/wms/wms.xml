@@ -17,7 +17,7 @@
                   description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
 
         <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
-        <property name="secure" type="bool" description="Whether authentication is done securely" />
+        <property name="secure" type="bool" description="If false, authentication (master mode only) will be insecure, allowing replay attacks" />
 
         <property name="ignore-keyframes" type="string" description="Deprecated; has no effect"/>
 
