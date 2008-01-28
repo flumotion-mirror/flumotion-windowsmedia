@@ -11,7 +11,14 @@
       <entries>
         <entry type="component" location="wma.py"
                function="WMAEncoder" />
+        <entry type="wizard" location="wma_wizard.py"
+               function="WMAWizardPlugin" />
       </entries>
+
+      <wizard _description="WMA" type="audio-encoder" 
+              feeder="default" eater="default">
+        <provide-format media-type="wma"/>
+      </wizard>
 
       <properties>
         <property name="bitrate" type="int" />
@@ -33,6 +40,19 @@
             <directory name="flumotion/component/encoders/wma">
                 <filename location="__init__.py" />
                 <filename location="wma.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="wma-wizard">
+        <dependencies>
+            <dependency name="component" />
+            <dependency name="wma-component" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/encoders/wma">
+                <filename location="wma_wizard.py" />
             </directory>
         </directories>
     </bundle>

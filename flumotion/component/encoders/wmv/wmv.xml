@@ -13,7 +13,14 @@
                function="WMVEncoder" />
          <entry type="admin/gtk" location="admin_gtk.py"
                function="WMVEncoderAdminGtk" />
+        <entry type="wizard" location="wmv_wizard.py"
+               function="WMVWizardPlugin" />
       </entries>
+
+      <wizard _description="WMV" type="video-encoder" 
+              feeder="default" eater="default">
+        <provide-format media-type="wmv"/>
+      </wizard>
 
       <properties>
         <property name="bitrate" type="int" />
@@ -63,6 +70,20 @@
             <directory name="flumotion/component/encoders/wmv">
                <filename location="admin_gtk.py" />
                <filename location="wmv.glade" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="wmv-wizard">
+        <dependencies>
+            <dependency name="wmv-base" />
+            <dependency name="component" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/encoders/wmv">
+                <filename location="wmv-wizard.glade" />
+                <filename location="wmv_wizard.py" />
             </directory>
         </directories>
     </bundle>

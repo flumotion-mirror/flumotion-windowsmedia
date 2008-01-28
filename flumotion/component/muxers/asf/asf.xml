@@ -17,6 +17,12 @@
         <property name="preroll-time" type="int" />
       </properties>
 
+      <wizard _description="ASF" type="muxer" 
+              feeder="default" eater="default">
+        <accept-format media-type="wma"/>
+        <accept-format media-type="wmv"/>
+      </wizard>
+
     </component>
   </components>
 
