@@ -15,7 +15,7 @@
                function="WMAWizardPlugin" />
       </entries>
 
-      <wizard _description="WMA" type="audio-encoder" 
+      <wizard _description="Windows Media Audio v2" type="audio-encoder" 
               feeder="default" eater="default">
         <provide-format media-type="wma"/>
       </wizard>

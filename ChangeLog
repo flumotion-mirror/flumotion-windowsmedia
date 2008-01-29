@@ -1,3 +1,15 @@
+2008-01-29  Johan Dahlin  <johan@gnome.org>
+
+	* flumotion/component/encoders/wmv/wmv-wizard.glade:
+	Allow bitrates up to 16348kbps
+	
+	* flumotion/component/encoders/wma/wma.xml:
+	* flumotion/component/encoders/wma/wma_wizard.py:
+	* flumotion/component/encoders/wmv/wmv.xml:
+	* flumotion/component/encoders/wmv/wmv_wizard.py:
+	WMV -> Windows Media Video
+	WMA -> windows Media Audio
+
 2008-01-28  Johan Dahlin  <johan@gnome.org>
 
 	* flumotion/component/encoders/wma/wma.xml:

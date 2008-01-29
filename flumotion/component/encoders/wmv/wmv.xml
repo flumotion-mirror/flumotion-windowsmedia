@@ -17,7 +17,7 @@
                function="WMVWizardPlugin" />
       </entries>
 
-      <wizard _description="WMV" type="video-encoder" 
+      <wizard _description="Windows Media Video v3" type="video-encoder" 
               feeder="default" eater="default">
         <provide-format media-type="wmv"/>
       </wizard>
