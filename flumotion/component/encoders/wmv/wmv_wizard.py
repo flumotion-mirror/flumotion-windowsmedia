@@ -71,5 +71,5 @@ class WMVWizardPlugin(object):
         self.wizard = wizard
         self.model = WMVVideoEncoder()
 
-    def get_conversion_step(self):
+    def getConversionStep(self):
         return WMVStep(self.wizard, self.model)

@@ -64,5 +64,5 @@ class WMAWizardPlugin(object):
         self.wizard = wizard
         self.model = WMAAudioEncoder()
 
-    def get_conversion_step(self):
+    def getConversionStep(self):
         return WMAStep(self.wizard, self.model)
