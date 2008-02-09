@@ -54,9 +54,9 @@ class WMAStep(AudioEncoderStep):
 
         self.add_proxy(self.model.properties, ['bitrate'])
 
-    def worker_changed(self):
-        self.model.worker = self.worker
-        self.wizard.require_elements(self.worker, 'fluwmaenc')
+    def worker_changed(self, worker):
+        self.model.worker = worker
+        self.wizard.require_elements(worker, 'fluwmaenc')
 
 
 class WMAWizardPlugin(object):
