@@ -1,3 +1,9 @@
+2008-02-26  Michael Smith <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms/wms.py:
+	  First phase of bringing this up to date for trunk component API.
+	  Not yet tested.
+
 2008-02-26  Johan Dahlin  <johan@gnome.org>
 
 	* flumotion/component/muxers/asf/asf.xml:

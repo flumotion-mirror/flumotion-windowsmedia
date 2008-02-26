@@ -454,6 +454,11 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     A component to act (to a Windows Media Encoder client in push mode) like
     a Windows Media Server, in order to accept an ASF stream.
     """
+
+    def init(self):
+        self._porterDeferred = None
+        self.type = None
+
     def do_check(self):
         props = self.config['properties']
 
@@ -477,13 +482,6 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         if not props.get('secure', True):
             self._authenticator.enableReplayAttacks()
 
-        pushmode = props.get('type', 'master') != 'pull'
-        self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
-
-        return feedcomponent.ParseLaunchComponent.do_setup(self)
-
-    def do_start(self, *args, **kwargs):
-
         # Watch for data flow through identity to turn hungry/happy as 
         # appropriate
         self._inactivatedByPadMonitor = False
@@ -498,39 +496,30 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             factory = WMSPullFactory(self._srcelement)
 
             reactor.connectTCP(host, port, factory)
-            return feedcomponent.ParseLaunchComponent.do_start(self,
-                *args, **kwargs)
-
         elif self.type == 'slave':
             # Slaved to a porter...
             factory = WMSPushFactory(self._authenticator, self._srcelement)
-            d1 = feedcomponent.ParseLaunchComponent.do_start(self,
-                *args, **kwargs)
 
-            d2 = defer.Deferred()
+            self._porterDeferred = d = defer.Deferred()
             mountpoints = [self.mountPoint]
             self._pbclient = porterclient.HTTPPorterClientFactory(
-                factory, mountpoints, d2)
+                factory, mountpoints, d)
 
             creds = credentials.UsernamePassword(self._porterUsername,
                 self._porterPassword)
             self._pbclient.startLogin(creds, self.medium)
 
             self.debug("Starting porter login at \"%s\"", self._porterPath)
-            # This will eventually cause d2 to fire
+            # This will eventually cause d to fire
             reactor.connectWith(
                 fdserver.FDConnector, self._porterPath,
                 self._pbclient, 10, checkPID=False)
-
-            return defer.DeferredList([d1, d2])
         else:
             # Streamer is standalone.
             factory = WMSPushFactory(self._authenticator, self._srcelement)
             try:
                 self.debug('Listening on %d' % self.port)
                 reactor.listenTCP(self.port, factory)
-                return feedcomponent.ParseLaunchComponent.do_start(self, *args,
-                    **kwargs)
             except error.CannotListenError:
                 t = 'Port %d is not available.' % self.port
                 self.warning(t)
@@ -542,11 +531,20 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
     def do_stop(self):
         if self.type == 'slave' and self._pbclient:
-            d1 = self._pbclient.deregisterPath(self.mountPoint)
-            d2 = feedcomponent.ParseLaunchComponent.do_stop(self)
-            return defer.DeferredList([d1,d2])
+            return self._pbclient.deregisterPath(self.mountPoint)
+
+    def do_pipeline_playing(self):
+        # Override this to not set the component happy; instead do this once
+        # both the pipeline has started AND we've logged in to the porter.
+        if self._porterDeferred:
+            d = self._porterDeferred
+            self._porterDeferred = None
         else:
-            return feedcomponent.ParseLaunchComponent.do_stop(self)
+            d = defer.succeed(None)
+
+        d.addCallback(lambda res: \
+            feedcomponent.ParseLaunchComponent.do_pipeline_playing(self))
+        return d
 
     def get_pipeline_string(self, properties):
         # We require an element by name for later adding our actual source 
@@ -555,12 +553,16 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         return "identity name=identity silent=true"
 
     def configure_pipeline(self, pipeline, properties):
+
+        pushmode = properties.get('type', 'master') != 'pull'
+        self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
+
         pipeline.add(self._srcelement)
 
-        src = pipeline.get_by_name("identity")
+        identity = pipeline.get_by_name("identity")
 
         srcpad = self._srcelement.get_pad("src")
-        sinkpad = src.get_pad("sink")
+        sinkpad = identity.get_pad("sink")
 
         srcpad.link(sinkpad)
 
