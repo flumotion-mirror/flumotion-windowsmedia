@@ -21,6 +21,7 @@
               feeder="default" eater="default">
         <accept-format media-type="wma"/>
         <accept-format media-type="wmv"/>
+        <provide-format media-type="asf"/>
       </wizard>
 
     </component>
