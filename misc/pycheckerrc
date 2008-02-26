@@ -5,6 +5,9 @@
 # If $HOME is not set, it will look in the current directory.
 #
 
+# list of evil C extensions that crash the interpreter
+evil = []
+
 # unused imports
 importUsed = 1
 
@@ -76,7 +79,10 @@ stringIteration = 1
 callingAttribute = 0
 
 # class attribute does not exist
-classAttrExists = 1
+# FIXME: need to fix bug in pychecker so we can disable this per admin_gtk
+# class
+# classAttrExists = 1
+classAttrExists = 0
 
 # First argument to methods
 methodArgName = 'self'
@@ -151,7 +157,9 @@ emptySlots = 1
 intDivide = 1
 
 # check if local variable shadows a global
-shadows = 1
+# disabled because it doesn't give useful output:
+# test_input/test24.py:11: Local variable (shadow) shadows global defined on line 0 in file <unknown>
+shadows = 0
 
 # check if a variable shadows a builtin
 shadowBuiltins = 0
@@ -166,7 +174,16 @@ usesExec = 0
 ignoreStandardLibrary = 1
 
 # ignore warnings from the list of modules
-blacklist = ['gtk', 'twisted', 'twisted.python', 'pyexpat']
+blacklist = [
+    'gtk', 'twisted', 'twisted.python', 'pyexpat',
+    'zope.interface', 'zope.interface.declarations',
+    'zope.interface.interface',
+    '_interface_coptimizations',
+#warning: couldn't find real module for class xml.parsers.expat.ExpatError (module name: xml.parsers.expat)
+    'xml.parsers.expat',
+    'optparse',
+    'kiwi', 'kiwi.ui',
+]
 
 # ignore global variables not used if name is one of these values
 variablesToIgnore = ['__version__', '__warningregistry__', '__all__', '__credits__', '__test__', '__author__', '__email__', '__revision__']
@@ -212,9 +229,4 @@ debug = 0
 
 # suppressions work like this
 suppressions = {
-  # FIXME: Consumption has a get_next with steps=None
-  'flumotion.wizard.steps.Consumption': "no-override",
-  # FIXME: the import there is for registering steps; do an actual method
-  'flumotion.wizard.wizard.Wizard': "no-import",
-#  'flumotion.twisted.defer.defer_generator': "self=wrapperself",
 }

@@ -1,3 +1,9 @@
+2008-02-26  Michael Smith <msmith@fluendo.com>
+
+	* misc/pycheckerrc:
+	  Have the same features/etc enabled here as in core flumotion. Makes us
+	  pass pychecker again.
+
 2008-02-09  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
