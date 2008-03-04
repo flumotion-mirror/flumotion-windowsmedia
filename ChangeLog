@@ -1,3 +1,10 @@
+2008-03-04  Michael Smith <msmith@fluendo.com>
+
+	* flumotion/component/producers/wms/asfparse.py:
+	  Rename a packet type based on the documentation from MS.
+	* flumotion/component/producers/wms/wms.py:
+	  Note that MS now has docs available.
+
 2008-02-26  Michael Smith <msmith@fluendo.com>
 
 	* flumotion/component/producers/wms/wms.py:

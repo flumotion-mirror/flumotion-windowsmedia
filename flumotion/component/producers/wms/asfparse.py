@@ -238,7 +238,7 @@ class ASFHTTPParser(log.Loggable):
     PACKET_HEADER = 1
     PACKET_DATA = 2
     PACKET_EOS = 3
-    PACKET_CLEAR = 4
+    PACKET_STREAM_CHANGE = 4
     PACKET_FILLER = 5
 
     def __init__(self, push):
@@ -456,8 +456,9 @@ class ASFHTTPParser(log.Loggable):
                         self.debug("Header packet header received")
                         self._packet_type = self.PACKET_HEADER
                     elif self._packet[1] == 'C':
-                        self.debug("Clear packet header received")
-                        self._packet_type = self.PACKET_CLEAR
+                        self.debug("Stream Change Notification packet header "
+                            "received")
+                        self._packet_type = self.PACKET_STREAM_CHANGE
                     elif self._packet[1] == 'D':
                         self.log("Data packet header received")
                         self._packet_type = self.PACKET_DATA
@@ -495,8 +496,8 @@ class ASFHTTPParser(log.Loggable):
                     elif self._packet_type == self.PACKET_EOS:
                         self.debug("Received EOS")
                         ret = False
-                    elif self._packet_type == self.PACKET_CLEAR:
-                        self.debug("Clear packet? Not sure what to do...")
+                    elif self._packet_type == self.PACKET_STREAM_CHANGE:
+                        self.warning("Stream change packet. Not implemented.")
                     elif self._packet_type == self.PACKET_UNKNOWN:
                         # Write out up to 20 bytes for later perusal...
                         outlen = min(len(self._packet), 20)

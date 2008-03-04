@@ -12,6 +12,11 @@
 
 # Headers in this file shall remain intact.
 
+# Note: Since this was written, Microsoft has published documentation of the
+# format. See: http://download.microsoft.com/download/9/5/E/95EF66AF-9026-4BB0-A41D-A4F81802D92C/%5BMS-WMHTTP%5D.pdf
+# The current implementation is based on reverse-engineering; it should be
+# verified against the spec and any issues fixed.
+
 import gst
 import time
 import random
