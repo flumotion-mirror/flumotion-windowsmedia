@@ -12,7 +12,10 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.wizard.basesteps import AudioEncoderStep
+from flumotion.wizard.interfaces import IEncoderPlugin
 from flumotion.wizard.models import AudioEncoder
 
 __version__ = "$Rev$"
@@ -53,6 +56,7 @@ class WMAStep(AudioEncoderStep):
 
 
 class WMAWizardPlugin(object):
+    implements(IEncoderPlugin)
     def __init__(self, wizard):
         self.wizard = wizard
         self.model = WMAAudioEncoder()
