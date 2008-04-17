@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS = -I common
 
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
+include $(srcdir)/common/deb.mk
 
 SUBDIRS = flumotion common misc
 
