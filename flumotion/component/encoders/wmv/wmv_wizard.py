@@ -54,12 +54,9 @@ class WMVStep(VideoEncoderStep):
 
         self.add_proxy(self.model.properties, ['bitrate'])
 
-    def get_next(self):
-        return self.wizard.get_step('Encoding').get_audio_page()
-
-    def worker_changed(self, worker):
+    def workerChanged(self, worker):
         self.model.worker = worker
-        self.wizard.require_elements(worker, 'fluwmvenc')
+        self.wizard.requireElements(worker, 'fluwmvenc')
 
 
 class WMVWizardPlugin(object):
