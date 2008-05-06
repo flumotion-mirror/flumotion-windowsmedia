@@ -25,7 +25,7 @@
 	* flumotion/component/encoders/wmv/wmv_wizard.py:
 	Mark the plugins as implementing IEncoderPlugin
 
-2008-03-06  Johan Dahlin  <johan@gnome.org>
+2008-03-06  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
 	* flumotion/component/encoders/wmv/wmv_wizard.py:
@@ -44,7 +44,7 @@
 	  First phase of bringing this up to date for trunk component API.
 	  Not yet tested.
 
-2008-02-26  Johan Dahlin  <johan@gnome.org>
+2008-02-26  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/muxers/asf/asf.xml:
 	Unbitrot and provide a muxer format
@@ -61,13 +61,13 @@
 	* flumotion/component/encoders/wmv/wmv_wizard.py:
 	  Apparently some API has changed.
 
-2008-01-30  Johan Dahlin  <johan@gnome.org>
+2008-01-30  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
 	* flumotion/component/encoders/wmv/wmv_wizard.py:
 	Update to new wizard API
 	
-2008-01-29  Johan Dahlin  <johan@gnome.org>
+2008-01-29  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wmv/wmv-wizard.glade:
 	Allow bitrates up to 16348kbps
@@ -79,7 +79,7 @@
 	WMV -> Windows Media Video
 	WMA -> windows Media Audio
 
-2008-01-28  Johan Dahlin  <johan@gnome.org>
+2008-01-28  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wma/wma.xml:
 	* flumotion/component/encoders/wma/wma_wizard.py:
