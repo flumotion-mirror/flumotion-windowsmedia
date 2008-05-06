@@ -1,0 +1,6 @@
+flumotion-windowsmedia (0.4.0.1-1flu1~hardy1) gutsy; urgency=low
+
+  * Update for hardy and new wizard api
+
+ -- Johan Dahlin <johan@flumotion.com>  Thu, 17 Apr 2008 14:17:23 -0300
+
