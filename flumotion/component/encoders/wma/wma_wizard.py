@@ -37,7 +37,7 @@ class WMAAudioEncoder(AudioEncoder):
 
 class WMAStep(AudioEncoderStep):
     name = 'Windows Media Audio encoder'
-    sidebar_name = 'Windows Media Audio'
+    sidebarName = 'Windows Media Audio'
     component_type = 'wma'
 
     # WizardStep
