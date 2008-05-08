@@ -26,7 +26,7 @@ _ = gettext.gettext
 
 
 class WMVVideoEncoder(VideoEncoder):
-    component_type = 'wmv-encoder'
+    componentType = 'wmv-encoder'
     def __init__(self):
         super(WMVVideoEncoder, self).__init__()
         self.has_quality = True
@@ -44,8 +44,8 @@ class WMVStep(VideoEncoderStep):
     name = 'Windows Media Video Encoder'
     sidebarName = 'Windows Media Video'
     gladeFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                              'wmv-wizard.glade')
-    component_type = 'wmv'
+                             'wmv-wizard.glade')
+    componentType = 'wmv'
 
     # WizardStep
 

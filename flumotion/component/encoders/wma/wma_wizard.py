@@ -22,7 +22,7 @@ __version__ = "$Rev$"
 
 
 class WMAAudioEncoder(AudioEncoder):
-    component_type = 'wma-encoder'
+    componentType = 'wma-encoder'
 
     def __init__(self):
         super(WMAAudioEncoder, self).__init__()
@@ -38,7 +38,7 @@ class WMAAudioEncoder(AudioEncoder):
 class WMAStep(AudioEncoderStep):
     name = 'Windows Media Audio encoder'
     sidebarName = 'Windows Media Audio'
-    component_type = 'wma'
+    componentType = 'wma'
 
     # WizardStep
 
