@@ -18,7 +18,7 @@ from flumotion.component.base import admin_gtk
 
 class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
     logCategory = 'wmv'
-    glade_file = 'flumotion/component/encoders/wmv/wmv.glade'
+    gladeFile = 'flumotion/component/encoders/wmv/wmv.glade'
     uiStateHandlers = None
 
     def haveWidgetTree(self):

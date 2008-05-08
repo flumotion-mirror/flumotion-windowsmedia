@@ -43,7 +43,7 @@ class WMVVideoEncoder(VideoEncoder):
 class WMVStep(VideoEncoderStep):
     name = 'Windows Media Video Encoder'
     sidebarName = 'Windows Media Video'
-    glade_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+    gladeFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'wmv-wizard.glade')
     component_type = 'wmv'
 
