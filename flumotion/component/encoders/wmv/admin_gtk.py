@@ -2,7 +2,7 @@
 # vi:si:et:sw=4:sts=4:ts=4
 #
 # Flumotion - a streaming media server
-# Copyright (C) 2004,2005,2006,2007 Fluendo, S.A. (www.fluendo.com).
+# Copyright (C) 2004,2005,2006,2007,2008 Fluendo, S.A. (www.fluendo.com).
 # All rights reserved.
 
 # Licensees having purchased or holding a valid Flumotion Advanced
@@ -12,11 +12,11 @@
 
 # Headers in this file shall remain intact.
 
-from gettext import gettext as _
+from flumotion.component.base.admin_gtk import BaseAdminGtk
+from flumotion.component.base.baseadminnode import BaseAdminGtkNode
 
-from flumotion.component.base import admin_gtk
 
-class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
+class WMVEncoderAdminGtkNode(BaseAdminGtkNode):
     logCategory = 'wmv'
     gladeFile = 'flumotion/component/encoders/wmv/wmv.glade'
     uiStateHandlers = None
@@ -29,7 +29,7 @@ class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
         self._complexity = self.wtree.get_widget('value-complexity')
 
     def setUIState(self, state):
-        admin_gtk.BaseAdminGtkNode.setUIState(self, state)
+        BaseAdminGtkNode.setUIState(self, state)
         if not self.uiStateHandlers:
             self.uiStateHandlers = {'encoder': self.encoderSet,
                                     'version': self.versionSet,
@@ -37,12 +37,12 @@ class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
                                     'complexity': self.complexitySet }
         for k, handler in self.uiStateHandlers.items():
             handler(state.get(k))
-                                    
+
     def stateSet(self, state, key, value):
         handler = self.uiStateHandlers.get(key, None)
         if handler:
             handler(value)
-        
+
     def encoderSet(self, encoder):
     	if self._encoder:
             self._encoder.set_text(str(encoder))
@@ -50,7 +50,7 @@ class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
     def versionSet(self, version):
         if self._version:
             self._version.set_text(str(version))
-        
+
     def bitrateSet(self, bitrate):
     	if self._bitrate:
             self._bitrate.set_text(str(bitrate))
@@ -59,10 +59,10 @@ class WMVEncoderAdminGtkNode(admin_gtk.BaseAdminGtkNode):
         if self._complexity:
             self._complexity.set_text(str(complexity))
 
-class WMVEncoderAdminGtk(admin_gtk.BaseAdminGtk):
+class WMVEncoderAdminGtk(BaseAdminGtk):
     def setup(self):
         wmvnode = WMVEncoderAdminGtkNode(self.state, self.admin,
                                          title="Encoder")
         self.nodes['Encoder'] = wmvnode
 
-        return admin_gtk.BaseAdminGtk.setup(self)
+        return BaseAdminGtk.setup(self)

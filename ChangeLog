@@ -1,3 +1,8 @@
+2008-05-27  Johan Dahlin  <johan@flumotion.com>
+
+	* flumotion/component/encoders/wmv/admin_gtk.py:
+	Update to latest flumotion API
+
 2008-05-08  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
