@@ -84,7 +84,7 @@ class DigestAuth(log.Loggable):
 
     def _generateOpaque(self):
         return self._generateRandomString(16)
-        
+
     def _generateNonce(self):
         return self._generateRandomString(16)
 
@@ -201,7 +201,7 @@ class DigestAuth(log.Loggable):
             #        return (http.BAD_REQUEST, pushId, False)
             nccount = None
             cnonce = None
-            
+
         if attrs['realm'] != self._realm:
             request.setResponseCode(http.BAD_REQUEST)
             return False
@@ -236,15 +236,15 @@ class DigestAuth(log.Loggable):
         keycard.uri = uri
 
         if qop:
-            keycard.qop = self._qop_type 
+            keycard.qop = self._qop_type
             keycard.cnonce = cnonce
             keycard.ncvalue = nccount
 
         keycard.requesterId = self._requesterId
 
-        self.debug("Authenticating keycard against bouncer %s", 
+        self.debug("Authenticating keycard against bouncer %s",
             self._bouncerName)
-        d = self._component.medium.callRemote('authenticate', 
+        d = self._component.medium.callRemote('authenticate',
             self._bouncerName, keycard)
 
         def _success(result):
@@ -271,7 +271,7 @@ class WMSRequest(server.Request, log.Loggable):
         return header.lower() in self.received_headers
 
     def process(self):
-        # This nasty hack is needed because setHeader() mangles case, which 
+        # This nasty hack is needed because setHeader() mangles case, which
         # WMEncoder doesn't cope with. Is there a better way to do this?
         class HackString(str):
             def capitalize(self):
@@ -284,7 +284,7 @@ class WMSRequest(server.Request, log.Loggable):
             "(Flumotion Streaming Server)")
         self.setHeader("Date", http.datetimeToString())
         # Not sure how neccesary these are, but WMS sends them, so why not?
-        self.setHeader("Supported", 
+        self.setHeader("Supported",
             "com.microsoft.wm.srvppair, com.microsoft.wm.sswitch, " \
             "com.microsoft.wm.predstrm, com.microsoft.wm.fastcache, " \
             "com.microsoft.wm.startupprofile")
@@ -313,7 +313,7 @@ class WMSRequest(server.Request, log.Loggable):
                 self.finish()
                 return
 
-            self.debug("Authentication successful: code %d, pushId %d", 
+            self.debug("Authentication successful: code %d, pushId %d",
                 code, pushId)
 
             ctype = self.getHeader("content-type")
@@ -361,7 +361,7 @@ class WMSRequest(server.Request, log.Loggable):
             channel._streaming_post = None
             return
         server.Request.requestReceived(self, command, path, version)
-        
+
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
     def __init__(self):
@@ -408,12 +408,12 @@ class WMSPullProtocol(basic.LineReceiver):
 
         self.writeRequest()
 
-        self._timeoutCL = reactor.callLater(self.timeout, 
+        self._timeoutCL = reactor.callLater(self.timeout,
             self._timeoutConnection)
 
     def connectionLost(self, reason):
         if self._timeoutCL:
-            self._timeoutCL.cancel()        
+            self._timeoutCL.cancel()
 
     def writeRequest(self):
         self.transport.write("GET / HTTP/1.0\r\n")
@@ -426,7 +426,7 @@ class WMSPullProtocol(basic.LineReceiver):
             self.factory.srcelement.resetASFParser()
             self.setRawMode()
         else:
-            self._headers.append(line) # No parsing yet... 
+            self._headers.append(line) # No parsing yet...
 
     def rawDataReceived(self, data):
         self._lastReceived = time.time()
@@ -439,7 +439,7 @@ class WMSPullProtocol(basic.LineReceiver):
             self.transport.loseConnection()
             self._timeoutCL = None
         else:
-            self._timeoutCL = reactor.callLater(self.timeout, 
+            self._timeoutCL = reactor.callLater(self.timeout,
                 self._timeoutConnection)
 
 class WMSPullFactory(protocol.ReconnectingClientFactory):
@@ -470,7 +470,8 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         if props.get('type', 'master') == 'slave':
             for k in 'socket-path', 'username', 'password':
                 if not 'porter-' + k in props:
-                    msg = "slave mode, missing required property 'porter-%s'" % k
+                    msg = ("slave mode, missing required property"
+                           " 'porter-%s'" % k)
                     return defer.fail(errors.ConfigError(msg))
 
     def do_setup(self):
@@ -487,14 +488,14 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         if not props.get('secure', True):
             self._authenticator.enableReplayAttacks()
 
-        # Watch for data flow through identity to turn hungry/happy as 
+        # Watch for data flow through identity to turn hungry/happy as
         # appropriate
         self._inactivatedByPadMonitor = False
         identity = self.pipeline.get_by_name("identity")
         self.debug("Adding pad monitor")
-        self._padMonitor = PadMonitor(self, identity.get_pad('src'), 
+        self._padMonitor = PadMonitor(self, identity.get_pad('src'),
             'identity-source')
-            
+
         if self.type == 'pull':
             host = self.config['properties'].get('host', 'localhost')
             port = self.config['properties'].get('port', 80)
@@ -552,7 +553,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         return d
 
     def get_pipeline_string(self, properties):
-        # We require an element by name for later adding our actual source 
+        # We require an element by name for later adding our actual source
         # element (which isn't in the registry, so we can't use it here), and
         # because returning an empty string here isn't allowed.
         return "identity name=identity silent=true"
@@ -627,7 +628,7 @@ class PadMonitor(log.Loggable):
         if self._check_flow_dc:
             self._check_flow_dc.cancel()
             self._check_flow_dc = None
-        
+
     def _add_flow_probe(self):
         self._probe_id['id'] = self._pad.add_buffer_probe(
             self._flow_watch_probe_cb)
@@ -655,13 +656,14 @@ class PadMonitor(log.Loggable):
     def _check_flow_timeout_now(self):
         self._check_flow_dc.cancel()
         self._check_flow_timeout()
-        
+
     def _check_flow_timeout(self):
         self._check_flow_dc = None
 
         now = time.time()
 
-        self.log("Checking flow timeout. now %r, last seen data at %r", now, self._last_data_time)
+        self.log("Checking flow timeout. now %r, last seen data at %r", now,
+                 self._last_data_time)
 
         if self._last_data_time > 0:
             delta = now - self._last_data_time
