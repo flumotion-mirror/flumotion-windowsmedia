@@ -1,7 +1,7 @@
 <registry>
   <components>
     <component type="windows-media-server-producer"
-               base="flumotion/component/producers">
+               base="flumotion/component/producers/wms">
       <source location="flumotion.component.producers.wms.wms"/>
       <feeder name="default"/>
 
@@ -11,7 +11,7 @@
       </entries>
 
       <properties>
-        <property name="mount-point" type="string" 
+        <property name="mount-point" type="string"
                   description="The mount point the stream is to be produced on"/>
         <property name="type" type="string"
                   description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
@@ -27,6 +27,10 @@
 
         <!-- If type is 'pull' -->
         <property name="host" type="string" description="Hostname to connect to in pull mode" />
+        <property name="wms-compatible" type="bool"
+                  description="If true, the component will request the stream in a more WMS-friendly way (default false)" />
+        <property name="wms-path" type="string"
+                  description="The path on which the remote WMS is going to provide the stream" />
 
         <!-- If type is 'slave' -->
         <property name="porter-socket-path" type="string"
@@ -35,7 +39,7 @@
                   description="Username to authenticate with to the porter" />
         <property name="porter-password" type="string"
                   description="Password to authenticate with to the porter" />
-        
+
 
       </properties>
     </component>
@@ -49,7 +53,7 @@
       </entries>
 
       <properties>
-        <property name="filename" type="string" 
+        <property name="filename" type="string"
                   description="Name of file containing usernames and password hashes"/>
       </properties>
     </component>
@@ -75,4 +79,4 @@
 
   </bundles>
 
-</registry> 
+</registry>

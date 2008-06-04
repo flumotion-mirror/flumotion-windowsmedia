@@ -421,10 +421,15 @@ class WMSPullProtocol(basic.LineReceiver):
     def lineReceived(self, line):
         if line == '':
             # Headers done...
+            self.processHeaders()
             self.factory.srcelement.resetASFParser()
             self.setRawMode()
         else:
             self._headers.append(line) # No parsing yet...
+
+    def processHeaders(self):
+        # nothing checked here a.t.m...
+        pass
 
     def rawDataReceived(self, data):
         self._lastReceived = time.time()
@@ -452,6 +457,55 @@ class WMSPullFactory(protocol.ReconnectingClientFactory):
         p.factory = self
         return p
 
+### Two more (sub)classes for (simplistic) handling of WME streams
+### published by WMS
+
+class WMSServerPullProtocol(WMSPullProtocol, log.Loggable):
+    logCategory = 'wmsserv-pull'
+    def writeRequest(self):
+        self.transport.write("GET /%s HTTP/1.0\r\n" % self.factory.path)
+        self.transport.write("User-Agent: NSServer/1.0,Flumotion/0.0\r\n")
+        self.transport.write("Pragma: xPlayStrm=1\r\n")
+        self.transport.write("\r\n")
+
+    def _processStatus(self):
+        # status line is supposed to be the first element in the
+        # _headers list
+        if len(self._headers) < 1:
+            self.info('No HTTP response header found?!')
+            return None
+        status_line = self._headers[0]
+        try:
+            (version, status, reason) = status_line.split(None, 2)
+            status = int(status)
+        except ValueError:
+            self.info('Could not parse the response status line.')
+            return None
+
+        return version, status, reason
+
+    def processHeaders(self):
+        # we don't do anything serious here, just log some info to
+        # help debug in case of the component staying hungry...
+        vsr = self._processStatus()
+        if vsr:
+            status = vsr[1]
+            if status == 200:
+                return True
+            else:
+                self.info('Unexpected HTTP status found: %d', status)
+
+        # if the response is anything but 200, we don't reconnect
+        # immediately - we'll reconnect when the other end closes
+        # connection or after timeout if there's no data flowing...
+
+class WMSServerPullFactory(WMSPullFactory):
+    protocol = WMSServerPullProtocol
+
+    def __init__(self, srcelement, path=''):
+        WMSPullFactory.__init__(self, srcelement)
+        self.path = path.lstrip('/')
+
 class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
     """
     A component to act (to a Windows Media Encoder client in push mode) like
@@ -471,6 +525,17 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                     msg = ("slave mode, missing required property"
                            " 'porter-%s'" % k)
                     return defer.fail(errors.ConfigError(msg))
+        elif props.get('type', 'master') == 'pull':
+            wmsCompat = props.get('wms-compatible', False)
+            wmsPath = props.get('wms-path', None)
+
+            msg = None
+            if (wmsCompat and not wmsPath):
+                msg = ('wms-path not specified for WMS compatibility mode')
+            elif (not wmsCompat and wmsPath):
+                msg = ("WMS compatibility set without specifying path")
+            if msg:
+                return defer.fail(errors.ConfigError(msg))
 
     def do_setup(self):
         props = self.config['properties']
@@ -497,7 +562,11 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
         if self.type == 'pull':
             host = self.config['properties'].get('host', 'localhost')
             port = self.config['properties'].get('port', 80)
-            factory = WMSPullFactory(self._srcelement)
+            wmsPath = self.config['properties'].get('wms-path', None)
+            if wmsPath:
+                factory = WMSServerPullFactory(self._srcelement, wmsPath)
+            else:
+                factory = WMSPullFactory(self._srcelement)
 
             reactor.connectTCP(host, port, factory)
         elif self.type == 'slave':
