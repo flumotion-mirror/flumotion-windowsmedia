@@ -13,11 +13,14 @@
 # Headers in this file shall remain intact.
 
 from twisted.internet import defer
-from flumotion.component import feedcomponent
-from flumotion.common import messages, gstreamer, common
 
-from flumotion.common.messages import N_
-T_ = messages.gettexter('flumotion')
+from flumotion.common import gstreamer, common
+from flumotion.common.i18n import gettexter, N_
+from flumotion.common.messages import Error
+from flumotion.component import feedcomponent
+
+T_ = gettexter('flumotion')
+
 
 class WMVEncoder(feedcomponent.ParseLaunchComponent):
     checkTimestamp = True
@@ -45,11 +48,11 @@ class WMVEncoder(feedcomponent.ParseLaunchComponent):
                 version  = gstreamer.get_plugin_version('pitfdll')
                 if not version:
                     self.warning('could not find pitfdll.')
-                    m = messages.Error(T_( 
+                    m = Error(T_( 
                         N_("This host is missing the 'gst-pitfdll' GStreamer plug-in.\n")))
                 else:
                     self.warning('could not find dmoenc_wmvdmoe2v2, probably missing DLL, or old registry.')
-                    m = messages.Error(T_(
+                    m = Error(T_(
                         N_("This host is missing the Windows encoder DLL.\n")))
                 self.wmvEncoder = None
                 self.addMessage(m)
@@ -65,7 +68,7 @@ class WMVEncoder(feedcomponent.ParseLaunchComponent):
                 self.wmvVersion = gstreamer.get_plugin_version('pitfdll')
             else:
                 self.warning('could not find any WMV encoder.')
-                m = messages.Error(T_(
+                m = Error(T_(
                     N_("This host is missing the WMV encoder plug-ins.\n")))
                 self.wmvEncoder = None
                 self.addMessage(m)

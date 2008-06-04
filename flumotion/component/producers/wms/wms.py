@@ -2,7 +2,7 @@
 # vi:si:et:sw=4:sts=4:ts=4
 #
 # Flumotion - a streaming media server
-# Copyright (C) 2007 Fluendo, S.L. (www.fluendo.com).
+# Copyright (C) 2007,2008 Fluendo, S.L. (www.fluendo.com).
 # All rights reserved.
 
 # Licensees having purchased or holding a valid Flumotion Advanced
@@ -17,27 +17,25 @@
 # The current implementation is based on reverse-engineering; it should be
 # verified against the spec and any issues fixed.
 
-import gst
-import time
 import random
+import time
 
+from twisted.cred import credentials
 from twisted.internet import reactor, defer, error, protocol
 from twisted.protocols import basic
-from twisted.web import resource, server, http
-from twisted.cred import credentials
+from twisted.web import server, http
 
+from flumotion.common import log, errors, keycards
+from flumotion.common.i18n import gettexter, N_
+from flumotion.common.messages import Error
 from flumotion.component import feedcomponent
-from flumotion.common import log, errors, messages, keycards
-from flumotion.common.planet import moods
-
-from flumotion.twisted import fdserver
-from flumotion.component.misc.porter import porterclient
 from flumotion.component.component import moods
-
+from flumotion.component.misc.porter import porterclient
 from flumotion.component.producers.wms import asfparse
+from flumotion.twisted import fdserver
 
-from flumotion.common.messages import N_
-T_ = messages.gettexter('flumotion-windowsmedia')
+T_ = gettexter('flumotion-windowsmedia')
+
 
 class DigestAuth(log.Loggable):
     logCategory = "digestauth"
@@ -529,7 +527,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             except error.CannotListenError:
                 t = 'Port %d is not available.' % self.port
                 self.warning(t)
-                m = messages.Error(T_(N_(
+                m = Error(T_(N_(
                     "Network error: TCP port %d is not available."), self.port))
                 self.addMessage(m)
                 self.setMood(moods.sad)
