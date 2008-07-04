@@ -1,3 +1,8 @@
+2008-07-04  Johan Dahlin  <johan@flumotion.com>
+
+	* flumotion/component/encoders/wmv/wmv.py:
+	formatStorage moved from f.c.c. to f.c.format.
+
 2008-06-04  Arek Korbik  <arkadini@gmail.com>
 
 	* flumotion/component/producers/wms/wms.py:

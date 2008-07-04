@@ -14,7 +14,8 @@
 
 from twisted.internet import defer
 
-from flumotion.common import gstreamer, common
+from flumotion.common import gstreamer
+from flumotion.common.format import formatStorage
 from flumotion.common.i18n import gettexter, N_
 from flumotion.common.messages import Error
 from flumotion.component import feedcomponent
@@ -95,5 +96,5 @@ class WMVEncoder(feedcomponent.ParseLaunchComponent):
             element.set_property('buffer-delay', properties['buffer-delay'])
 
         self.uiState.set('complexity', element.get_property('complexity'))
-        self.uiState.set('bitrate', common.formatStorage(element.get_property('bitrate')) + 'bit/s')
+        self.uiState.set('bitrate', formatStorage(element.get_property('bitrate')) + 'bit/s')
 
