@@ -1,3 +1,8 @@
+2008-07-17  Arek Korbik  <arkadini@gmail.com>
+
+	* flumotion/component/producers/wms/wms.py: Handle cases with
+	multiple connecting sources better. Add more logging.
+
 2008-07-04  Johan Dahlin  <johan@flumotion.com>
 
 	* flumotion/component/encoders/wmv/wmv.py:

@@ -163,7 +163,8 @@ class DigestAuth(log.Loggable):
             self.debug("No auth header, sending unauthorized")
             return (http.UNAUTHORIZED, pushId, False)
 
-        self.debug("Has auth header, parsing")
+        self.debug("Has auth header, parsing (%r)",
+                   request.getHeader('Authorization'))
 
         authHeader = request.getHeader("Authorization")
         type, attrs = self._parseAuthHeader(authHeader)
@@ -308,20 +309,36 @@ class WMSRequest(server.Request, log.Loggable):
                     if pushId:
                         self.headers[HackString("Set-Cookie")] = \
                             "push-id=%d" % pushId
-                self.finish()
+                self.debug('channel "length": %r', self.channel.length)
+                disconnect = False
+                if self.channel.length > 0:
+                    # self.finish() is not enough for twisted to
+                    # cleanup persistent channel properly if we didn't
+                    # read the whole data contained in the POST's
+                    # Content-Length - we need to do it ourselves
+
+                    # right now we just drop connection after writing
+                    # the response
+                    # FIXME: better handling (keeping the channel
+                    # open, etc.) left for when(/if?) it's really needed
+                    disconnect = True
+
+                self.finish(disconnect=disconnect)
                 return
 
             self.debug("Authentication successful: code %d, pushId %d",
                 code, pushId)
 
             ctype = self.getHeader("content-type")
+            factory = self.channel.factory
             if ctype == 'application/x-wms-pushsetup':
-                if self.channel.factory.streamingRequest:
+                if factory.streamingRequest:
                     self.warning("Already streaming; dropping existing "
                         "connection")
-                    self.channel.factory.streamingRequest.finish()
-                    self.channel.factory.streamingRequest = None
-                    self.channel.factory.srcelement.resetASFParser()
+                    factory.streamingRequest.finish(disconnect=True)
+
+                    self.debug('resetting ASF parser...')
+                    factory.srcelement.resetASFParser()
 
                 if pushId:
                     self.headers["Set-Cookie"] = "push-id=%d" % pushId
@@ -330,12 +347,17 @@ class WMSRequest(server.Request, log.Loggable):
                 return
             elif ctype == 'application/x-wms-pushstart':
                 self.debug("Got pushstart!")
+                if factory.streamingRequest:
+                    self.warning('Already streaming: %r',
+                                 factory.streamingRequest)
+                    factory.streamingRequest.finish(disconnect=True)
+
                 # We should now be in streaming-POST mode, so finish() is called
                 # by the channel at the end.
                 return
             else:
                 self.debug("Unknown content-type: %s", ctype)
-                self.finish()
+                self.finish(disconnect=True)
                 return
 
         d.addCallback(authenticated)
@@ -360,6 +382,38 @@ class WMSRequest(server.Request, log.Loggable):
             return
         server.Request.requestReceived(self, command, path, version)
 
+    def finish(self, disconnect=False):
+        """An overridden finish to optionally force dropping
+        connection even if the channel is in persistent mode."""
+
+        self.debug('finish: %r', self)
+
+        if self.finished:
+            self.warning('But finished already I have been!')
+            return
+
+        if disconnect:
+            # not possible to disconnect the transport after calling
+            # finish() because the reference will be gone, so forcing
+            # to handle finish in a non-persistent mode (ending in
+            # closing the connection)
+            self.channel.persistent = 0
+
+        factory = self.channel.factory
+        if factory.streamingRequest == self:
+            factory.streamingRequest = None
+
+        server.Request.finish(self)
+
+    def connectionLost(self, reason):
+        self.debug('lost connection (streaming: %r): %r',
+                   bool(self.channel._streaming_post), reason)
+        self.finish()
+
+    def __repr__(self):
+        return '<%s %s %s [%s]>' % (self.method, self.uri, self.clientproto,
+                                    self.getClientIP())
+
 class WMSChannel(http.HTTPChannel, log.Loggable):
 
     def __init__(self):
@@ -375,6 +429,24 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
             self._streaming_post = self.requests[-1]
             self._streaming_post.requestReceived(
                 self._command, self._path, self._version)
+
+    # local implementations adding debugging info...
+    def connectionMade(self):
+        peer = self.transport.getPeer()
+        self.debug('connection made from: %s:%d', peer.host, peer.port)
+        http.HTTPChannel.connectionMade(self)
+
+    def connectionLost(self, reason):
+        self.debug('lost connection (streaming: %r): %r',
+                   bool(self._streaming_post), reason)
+        peer = self.transport.getPeer()
+        self.debug('lost connection to: %s:%d (%r)',
+                   peer.host, peer.port, self.transport)
+        http.HTTPChannel.connectionLost(self, reason)
+
+    def requestDone(self, request):
+        self.debug('request done: %r (l: %r)', request, self.length)
+        http.HTTPChannel.requestDone(self, request)
 
 class WMSPushFactory(http.HTTPFactory):
     protocol = WMSChannel
