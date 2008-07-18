@@ -9,7 +9,7 @@ include $(srcdir)/common/deb.mk
 SUBDIRS = flumotion common misc
 
 EXTRA_DIST = \
-	env \
+	env.in \
 	LICENSE.Flumotion \
 	flumotion-windowsmedia.spec
 

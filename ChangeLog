@@ -1,3 +1,12 @@
+2008-07-18  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* Makefile.am:
+	* configure.ac:
+	* env:
+	* flumotion/test/Makefile.am:
+	* env (deleted):
+	  Generate env.
+
 2008-07-17  Arek Korbik  <arkadini@gmail.com>
 
 	* flumotion/component/producers/wms/wms.py: Handle cases with

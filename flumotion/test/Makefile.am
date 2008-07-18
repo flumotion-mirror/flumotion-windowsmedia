@@ -8,7 +8,7 @@ BUILT_SOURCES = setup.py
 
 EXTRA_DIST = __init__.py
 
-TRIAL_ENV = $(top_srcdir)/env
+TRIAL_ENV = $(top_builddir)/env
 
 check-local: trial
 

@@ -72,6 +72,8 @@ AC_SUBST(FLUMOTION_DIR)
 
 PREAMBLE=`cat $srcdir/misc/preamble.py`
 
+AC_CONFIG_FILES([env], [chmod +x env])
+
 dnl output stuff
 FLUMOTION_SETUP(flumotion/test/setup.py, $FLUMOTION_DIR, $PREAMBLE)
 FLUMOTION_SETUP(misc/setup.py, $FLUMOTION_DIR, $PREAMBLE)
