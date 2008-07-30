@@ -1,3 +1,9 @@
+2008-07-30  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/component/encoders/wma/wma_wizard.py:
+	* flumotion/component/encoders/wmv/wmv_wizard.py:
+	  Add titles. Make translatable.  Fixes #2073.
+
 2008-07-18  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* env.in (added):
