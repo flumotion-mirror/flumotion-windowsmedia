@@ -1,3 +1,14 @@
+2008-08-04  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* Makefile.am:
+	* configure.ac:
+	* conf (added):
+	* conf/Makefile.am (added):
+	* conf/examples (added):
+	* conf/examples/pull.xml (added):
+	* conf/examples/push.xml (added):
+	  Adding two example configs.
+
 2008-07-30  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:

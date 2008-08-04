@@ -6,7 +6,7 @@ include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 include $(srcdir)/common/deb.mk
 
-SUBDIRS = flumotion common misc
+SUBDIRS = flumotion conf common misc
 
 EXTRA_DIST = \
 	env.in \

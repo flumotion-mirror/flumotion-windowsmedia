@@ -82,6 +82,7 @@ dnl output stuff
 AC_OUTPUT(
 Makefile
 common/Makefile
+conf/Makefile
 misc/Makefile
 flumotion/Makefile
 flumotion/test/Makefile

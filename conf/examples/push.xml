@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<planet>
+  <flow name="default">
+
+    <component name="wms-producer" type="windows-media-server-producer"
+               project="windowsmedia" version="0.4.2.1"
+               worker="localhost">
+      <property name="type">master</property>
+      <property name="port">10000</property>
+    </component>
+
+  </flow>
+</planet>
