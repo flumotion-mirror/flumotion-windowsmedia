@@ -12,12 +12,15 @@
 
 # Headers in this file shall remain intact.
 
+import gettext
+
 from zope.interface import implements
 
 from flumotion.wizard.basesteps import AudioEncoderStep
 from flumotion.wizard.interfaces import IEncoderPlugin
 from flumotion.wizard.models import AudioEncoder
 
+_ = gettext.gettext
 __version__ = "$Rev$"
 
 
