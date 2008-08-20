@@ -16,9 +16,9 @@ import gettext
 
 from zope.interface import implements
 
-from flumotion.wizard.basesteps import AudioEncoderStep
-from flumotion.wizard.interfaces import IEncoderPlugin
-from flumotion.wizard.models import AudioEncoder
+from flumotion.admin.gtk.basesteps import AudioEncoderStep
+from flumotion.admin.gtk.interfaces import IEncoderPlugin
+from flumotion.admin.gtk.models import AudioEncoder
 
 _ = gettext.gettext
 __version__ = "$Rev$"

@@ -17,9 +17,9 @@ import os
 
 from zope.interface import implements
 
-from flumotion.wizard.basesteps import VideoEncoderStep
-from flumotion.wizard.interfaces import IEncoderPlugin
-from flumotion.wizard.models import VideoEncoder
+from flumotion.admin.gtk.basesteps import VideoEncoderStep
+from flumotion.admin.gtk.interfaces import IEncoderPlugin
+from flumotion.admin.gtk.models import VideoEncoder
 
 __version__ = "$Rev$"
 _ = gettext.gettext
