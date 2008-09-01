@@ -1,3 +1,9 @@
+2008-09-01  Johan Dahlin  <johan@flumotion.com>
+
+	* flumotion/component/encoders/wma/wma_wizard.py:
+	* flumotion/component/encoders/wmv/wmv_wizard.py:
+	Typo fix, rename f.a.gtk.interfaces to f.a.a.interfaces
+
 2008-08-04  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* Makefile.am:

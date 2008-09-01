@@ -17,7 +17,7 @@ import gettext
 from zope.interface import implements
 
 from flumotion.admin.gtk.basesteps import AudioEncoderStep
-from flumotion.admin.gtk.interfaces import IEncoderPlugin
+from flumotion.admin.assistant.interfaces import IEncoderPlugin
 from flumotion.admin.gtk.models import AudioEncoder
 
 _ = gettext.gettext
