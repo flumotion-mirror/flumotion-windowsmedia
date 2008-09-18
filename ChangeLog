@@ -1,3 +1,10 @@
+2008-09-18  Jan Urbanski <jurbanski@flumotion.com>
+
+	* flumotion/component/producers/wms/wms.py
+	(WindowsMediaServer.configure_pipeline):
+	In the WMS component Use the right medium porter connections. Fixes
+	#2335.
+
 2008-09-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
