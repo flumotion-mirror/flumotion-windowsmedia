@@ -56,7 +56,7 @@ class WMAStep(AudioEncoderStep):
 
     def workerChanged(self, worker):
         self.model.worker = worker
-        self.wizard.requireElements(worker, 'fluwmaenc', 'fluasfmux')
+        self.wizard.requireElements(worker, 'fluwmaenc')
 
 
 class WMAWizardPlugin(object):

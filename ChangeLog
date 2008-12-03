@@ -2,6 +2,12 @@
 
 	* flumotion/component/encoders/wma/wma_wizard.py:
 	* flumotion/component/encoders/wmv/wmv_wizard.py:
+	Undoing last commit, wrong fix
+
+2008-12-03  Xavier Queralt Mateu  <xqueralt@flumotion.com>
+
+	* flumotion/component/encoders/wma/wma_wizard.py:
+	* flumotion/component/encoders/wmv/wmv_wizard.py:
 	Require fluasfmux for wma and wmv encoders.
 	Fixes #2774
 
