@@ -57,7 +57,7 @@ class WMVStep(VideoEncoderStep):
 
     def workerChanged(self, worker):
         self.model.worker = worker
-        self.wizard.requireElements(worker, 'fluwmvenc')
+        self.wizard.requireElements(worker, 'fluwmvenc', 'fluasfmux')
 
 
 class WMVWizardPlugin(object):
