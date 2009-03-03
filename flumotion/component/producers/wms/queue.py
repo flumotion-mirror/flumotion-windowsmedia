@@ -42,7 +42,7 @@ class AsyncQueue(object):
         Pop an object off the async queue and return it.
         This blocks if the queue is empty.
         Raises InterruptedException if, while blocked, another thread calls
-        unblock() 
+        unblock()
         """
         self._cond.acquire()
         if len(self._queue) == 0:

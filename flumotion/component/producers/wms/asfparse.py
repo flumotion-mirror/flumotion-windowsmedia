@@ -52,13 +52,13 @@ class InvalidBitstreamException(Exception):
     """
 
 def _readUInt64(buf, offset):
-    return ((ord(buf[offset])) | (ord(buf[offset+1])<<8) | 
+    return ((ord(buf[offset])) | (ord(buf[offset+1])<<8) |
             (ord(buf[offset+2])<<16) | (ord(buf[offset+3])<<24) |
             (ord(buf[offset+4])<<32) | (ord(buf[offset+5])<<40) |
             (ord(buf[offset+6])<<48) | (ord(buf[offset+7])<<56))
 
 def _readUInt32(buf, offset):
-    return ((ord(buf[offset])) | (ord(buf[offset+1])<<8) | 
+    return ((ord(buf[offset])) | (ord(buf[offset+1])<<8) |
             (ord(buf[offset+2])<<16) | (ord(buf[offset+3])<<24))
 
 def _readUInt16(buf, offset):
@@ -157,7 +157,7 @@ class ASFPacketParser(log.Loggable):
         self.log("Timestamp %dms, duration: %dms", self.timestampMS, self.durationMS)
 
         # Now we need to actually parse the payloads to figure out whether we
-        # have a keyframe... 
+        # have a keyframe...
         if multipay:
             self.readMultipay()
         else:
@@ -177,10 +177,10 @@ class ASFPacketParser(log.Loggable):
             # Special value meaning we have compressed payloads
             self.readUInt8() # prestimedelta
         else:
-            # Skip over the replicated data (application or implementation 
+            # Skip over the replicated data (application or implementation
             # specific data attached to each payload)
-            self._off += replicateddatalength 
-        
+            self._off += replicateddatalength
+
         streamNumber = streamNumberByte & 0x7f
         if streamNumber not in self._asfinfo.streams:
             raise InvalidBitstreamException(
@@ -243,9 +243,9 @@ class ASFHTTPParser(log.Loggable):
 
     def __init__(self, push):
         # There are two variants on the format. One is used in push mode, one in
-        # pull mode. The only difference I've noted is that each packet in 
-        # pull mode has a 12 byte header, push mode is 4 bytes. The 12 byte 
-        # header starts with the same 4 bytes, then has an extra 8 bytes that 
+        # pull mode. The only difference I've noted is that each packet in
+        # pull mode has a 12 byte header, push mode is 4 bytes. The 12 byte
+        # header starts with the same 4 bytes, then has an extra 8 bytes that
         # I don't know the meaning of (but ignoring them seems to work ok)
         self._pushmode = push
         self.debug("Initialised in %s", push and "push" or "pull")
@@ -286,7 +286,7 @@ class ASFHTTPParser(log.Loggable):
         flags = _readUInt16(buf, offset + 48)
         streamNumber = flags & 0x7f
 
-        self.debug("Parsed stream properties object for stream %d", 
+        self.debug("Parsed stream properties object for stream %d",
             streamNumber)
         if streamNumber not in self._asfinfo.streams:
             self._asfinfo.streams[streamNumber] = ASFStreamInfo()
@@ -294,7 +294,7 @@ class ASFHTTPParser(log.Loggable):
 
         type = self._readType(buf, offset+0)
         info.isAudio = type == GUID.ASF_AUDIO_MEDIA
-        self.debug("Stream is audio: %r, type %s", info.isAudio, 
+        self.debug("Stream is audio: %r, type %s", info.isAudio,
             _GUIDtoString(type))
         info.hasKeyframes = (not info.nocleanpointflag) and (not info.isAudio)
 
@@ -305,11 +305,11 @@ class ASFHTTPParser(log.Loggable):
         self._asfinfo.min_pkt_len = _readUInt32(buf, offset + 68)
         self._asfinfo.max_pkt_len = _readUInt32(buf, offset + 72)
 
-        self.debug("Min length: %d, Max %d", self._asfinfo.min_pkt_len, 
+        self.debug("Min length: %d, Max %d", self._asfinfo.min_pkt_len,
             self._asfinfo.max_pkt_len)
 
     def _parseExtendedStreamPropertiesObject(self, buf, offset, length):
-        # Right now, we only care about the flags, which we know the offset of 
+        # Right now, we only care about the flags, which we know the offset of
         if length < 64:
             raise InvalidBitstreamException("ExtendedStreamPropertiesObject too"
                 "short to read")
@@ -319,10 +319,10 @@ class ASFHTTPParser(log.Loggable):
         streamNumber = _readUInt16(buf, offset+48)
         nocleanpointflag = flags & 0x04
         resendlivecleanpointsflag = flags & 0x08
-        self.debug("Parsed flags: nocleanpoint %r, resendlivecleanpoints %r", 
+        self.debug("Parsed flags: nocleanpoint %r, resendlivecleanpoints %r",
             bool(nocleanpointflag), bool(resendlivecleanpointsflag))
 
-        self.debug("Parsed extended stream properties object for stream %d", 
+        self.debug("Parsed extended stream properties object for stream %d",
             streamNumber)
         if streamNumber not in self._asfinfo.streams:
             self._asfinfo.streams[streamNumber] = ASFStreamInfo()
@@ -344,7 +344,7 @@ class ASFHTTPParser(log.Loggable):
             self.debug("Parsing an extension header: %s", _GUIDtoString(guid))
             if guid == GUID.ASF_EXTENDED_STREAM_PROPERTIES_OBJECT:
                 self._parseExtendedStreamPropertiesObject(buf, offset, length)
-                
+
             offset = offset + length
 
     def _getHeaderBuffer(self, buf):
@@ -389,7 +389,7 @@ class ASFHTTPParser(log.Loggable):
         headerBuf.timestamp = gst.CLOCK_TIME_NONE
         headerBuf.duration = gst.CLOCK_TIME_NONE
         headerBuf.flag_set(gst.BUFFER_FLAG_IN_CAPS)
-            
+
         self._caps = gst.caps_from_string("video/x-ms-asf")
         # streamheader needs to be a GST_TYPE_ARRAY, which is represented
         # as a tuple in python. Support for this added in gst-python 0.10.8
@@ -410,7 +410,7 @@ class ASFHTTPParser(log.Loggable):
             pp.parseDataPacket(data, 8)
 
         # Some of these require padding to be added here.
-        self.log("packet length %d, required to be %d", len(data), 
+        self.log("packet length %d, required to be %d", len(data),
             pp.packetLen)
         if len(data) < pp.packetLen:
             pad = '\0' * (pp.packetLen - len(data))
@@ -479,7 +479,7 @@ class ASFHTTPParser(log.Loggable):
                                              (ord(self._packet[2])))
                 else:
                     if self._packet_type == self.PACKET_HEADER:
-                        self.debug("Received ASF header, length %d", 
+                        self.debug("Received ASF header, length %d",
                             len(self._packet))
                         buf = self._getHeaderBuffer(self._packet)
                         self.debug("Appending header buffer of length %d",
@@ -487,7 +487,7 @@ class ASFHTTPParser(log.Loggable):
                         self.debug("Buf starts with %x, %x, %x", ord(buf[0]), ord(buf[1]), ord(buf[2]))
                         self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_DATA:
-                        self.log("Received ASF data, length %d", 
+                        self.log("Received ASF data, length %d",
                             len(self._packet))
                         buf = self._getDataBuffer(self._packet)
                         self._asfbuffers.append(buf)
@@ -555,7 +555,7 @@ class ASFSrc(gst.BaseSrc):
         Parses it to ASF, then adds to async queue.
         """
         if not self.asfparser.parseData(data):
-            # EOS; but don't send an EOS, so we can recover if an encoder 
+            # EOS; but don't send an EOS, so we can recover if an encoder
             # reconnects later
             return
 
