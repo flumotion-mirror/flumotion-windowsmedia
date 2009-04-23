@@ -1,0 +1,20 @@
+Source: flumotion-windowsmedia
+Section: net
+Priority: optional
+Maintainer: Xavier Queralt <johan@flumotion.com>
+Build-Depends: cdbs (>= 0.4.43),
+               pkg-config,
+	       debhelper (>= 5.0.37.2),
+	       flumotion (>= 0.5.4),
+               python-epydoc,
+XS-Python-Version: >= 2.5
+Standards-Version: 3.8.1
+
+Package: flumotion-windowsmedia
+Architecture: any
+Depends: ${python:Depends},
+         flumotion (>= 0.5.4),
+         gst-fluendo-wmvenc (>= 0.10.3),
+         gst-fluendo-wmaenc (>= 0.10.7),
+         gst-fluendo-asfmux (>= 0.10.6)
+Description: Proprietary Flumotion windowsmedia for encoding and decoding

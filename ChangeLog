@@ -1,3 +1,15 @@
+
+=== release 0.5.0 ===
+
+2009-04-23  Xavier Queralt Mateu  <xqueralt@flumotion.com>
+
+	* configure.ac:
+	Releasing 0.5.0 and updating the requirements of flumotion to 0.5.4
+	* pkg/ubuntu-intrepid (added):
+	* pkg/ubuntu-intrepid/control (added):
+	* pkg/ubuntu-intrepid/changelog (added):
+	Add a new directory for ubuntu intrepid packages
+
 2009-02-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* env.in:
