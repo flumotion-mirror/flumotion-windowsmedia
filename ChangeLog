@@ -1,3 +1,13 @@
+2009-06-18  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/producers/wms/asfparse.py:
+	In case of parsing error, save the state in files for debuging.
+	Properly mask out the packet first bit of the first byte.
+	* flumotion/component/producers/wms/wms.py:
+	Logs HTTP requests and response headers.
+	Logs connection/requests transfer status.
+	Disabled twisted web default HTTP timeout of 12 hours.	
+
 2009-04-23  Xavier Queralt Mateu <xqueralt@flumotion.com>
 
 	* configure.ac:

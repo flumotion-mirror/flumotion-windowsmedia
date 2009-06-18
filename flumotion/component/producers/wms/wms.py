@@ -265,6 +265,7 @@ class WMSRequest(server.Request, log.Loggable):
 
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
+        self._bytes_read = 0
 
     def hasHeader(self, header):
         return header.lower() in self.received_headers
@@ -364,6 +365,7 @@ class WMSRequest(server.Request, log.Loggable):
         return d
 
     def handleContentChunk(self, data):
+        self._bytes_read += len(data)
         if self.channel._streaming_post == self:
             if self.channel.factory.streamingRequest != self:
                 self.channel.factory.streamingRequest = self
@@ -414,15 +416,64 @@ class WMSRequest(server.Request, log.Loggable):
         return '<%s %s %s [%s]>' % (self.method, self.uri, self.clientproto,
                                     self.getClientIP())
 
+
+class LoggingTransport(object, log.Loggable):
+
+    def __init__(self, transport):
+        self.__dict__["_transport"] = transport
+
+    def __getattr__(self, attr):
+        return getattr(self._transport, attr)
+
+    def __setattr(self, attr, value):
+        setattr(self._transport, attr, value)
+
+    def _print(self, data):
+        lines = data.split('\r\n')
+        for l in lines[:-1]:
+            self.debug("HTTP Response: %r", l)
+        if lines:
+            self.debug("HTTP Response: %r", lines[-1])
+
+    def write(self, data):
+        self._print(data)
+        self._transport.write(data)
+
+    def writeSequence(self, data):
+        self._print("".join(data))
+        self._transport.writeSequence(data)
+
+
 class WMSChannel(http.HTTPChannel, log.Loggable):
+
+    LOGGING_PERIOD = 10
 
     def __init__(self):
         http.HTTPChannel.__init__(self)
 
         self._streaming_post = None
         self._is_authenticated = False
+        self._raw_bytes = 0
+        self.__transport = None
+
+        self._loggingDC = None
+
+    def makeConnection(self, transport):
+        newTrans = LoggingTransport(transport)
+        http.HTTPChannel.makeConnection(self, newTrans)
+
+    def lineReceived(self, line):
+        self.debug("HTTP Request: %r", line)
+        http.HTTPChannel.lineReceived(self, line)
+
+    def rawDataReceived(self, data):
+        size = min(self.length, len(data))
+        self._raw_bytes += size
+        http.HTTPChannel.rawDataReceived(self, data)
 
     def allHeadersReceived(self):
+        last = self.requests[-1]
+        last._length = self.length
         http.HTTPChannel.allHeadersReceived(self)
         if self._command == 'POST' and self.length > 0:
             self.debug("Setting new streaming post request")
@@ -435,8 +486,10 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
         peer = self.transport.getPeer()
         self.debug('connection made from: %s:%d', peer.host, peer.port)
         http.HTTPChannel.connectionMade(self)
+        self._startLogging()
 
     def connectionLost(self, reason):
+        self._stopLogging()
         self.debug('lost connection (streaming: %r): %r',
                    bool(self._streaming_post), reason)
         peer = self.transport.getPeer()
@@ -448,12 +501,35 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
         self.debug('request done: %r (l: %r)', request, self.length)
         http.HTTPChannel.requestDone(self, request)
 
+    def _startLogging(self):
+        if self._loggingDC is None:
+            self._logState()
+
+    def _stopLogging(self):
+        if self._loggingDC is not None:
+            self._loggingDC.cancel()
+            self._loggingDC = None
+
+    def _logState(self):
+        if self.requests:
+            last = self.requests[-1]
+            self.debug("Connection: %d Bytes; "
+                       "Request: %d / %d Bytes (%0.2f %%)",
+                       self._raw_bytes, last._bytes_read, last._length,
+                       float(last._bytes_read) * 100 / last._length)
+        else:
+            self.debug("Connection: %d Bytes; No active request",
+                       self._raw_bytes)
+        self._loggingDC = reactor.callLater(self.LOGGING_PERIOD,
+                                            self._logState)
+
 class WMSPushFactory(http.HTTPFactory):
     protocol = WMSChannel
     requestFactory = WMSRequest
 
     def __init__(self, auth, srcelement):
-        http.HTTPFactory.__init__(self)
+        # Disable the timeout, server should not close streaming connections
+        http.HTTPFactory.__init__(self, timeout=None)
 
         self.digester = auth
         self.srcelement = srcelement

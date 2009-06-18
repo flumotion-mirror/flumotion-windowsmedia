@@ -12,6 +12,9 @@
 
 # Headers in this file shall remain intact.
 
+import tempfile
+import os
+
 from flumotion.common import log, errors
 
 from flumotion.component.producers.wms import queue
@@ -241,6 +244,9 @@ class ASFHTTPParser(log.Loggable):
     PACKET_STREAM_CHANGE = 4
     PACKET_FILLER = 5
 
+    MAX_RING_SIZE = 5
+    MAX_REMAINING_SIZE = 65*1204
+
     def __init__(self, push):
         # There are two variants on the format. One is used in push mode, one in
         # pull mode. The only difference I've noted is that each packet in
@@ -248,6 +254,8 @@ class ASFHTTPParser(log.Loggable):
         # header starts with the same 4 bytes, then has an extra 8 bytes that
         # I don't know the meaning of (but ignoring them seems to work ok)
         self._pushmode = push
+        self._packet_ring = []
+        self._header_packet = None
         self.debug("Initialised in %s", push and "push" or "pull")
         self.reset()
 
@@ -432,6 +440,40 @@ class ASFHTTPParser(log.Loggable):
 
         return buf
 
+    def _saveErrorState(self, remaining):
+        if self._header_packet is not None:
+            self.warning("Packet header without payload")
+            self._packet_ring.append(self._header_packet)
+            self._header_packet = None
+
+        fd, name = tempfile.mkstemp(prefix='wmsp-', suffix='.rem')
+        self.debug("MMS decoding state logged to files %s", name[:-3] + '*')
+        os.write(fd, remaining[:self.MAX_REMAINING_SIZE])
+        os.close(fd)
+        for n, packet in enumerate(self._packet_ring):
+            f = open(name[:-3] + str(n + 1), "w+b")
+            f.write(packet)
+            f.close()
+
+    def _push_header_packet(self, packet):
+        if self._header_packet is not None:
+            self.warning("Ask to push header packet two times ? ?")
+        self._header_packet = packet
+
+    def _push_payload_packet(self, packet):
+        if self._header_packet is None:
+            self.warning("Ask to push payload without header ? ?")
+        else:
+            packet = self._header_packet + packet
+            self._header_packet = None
+
+        self._push_packet(packet)
+
+    def _push_packet(self, packet):
+        while len(self._packet_ring) >= self.MAX_RING_SIZE:
+            del self._packet_ring[0]
+        self._packet_ring.append(packet)
+
     def parseData(self, data):
         ret = True
         length = len(data)
@@ -446,12 +488,16 @@ class ASFHTTPParser(log.Loggable):
 
             if not self._bytes_remaining:
                 if self._http_parser_state == self.STATE_HEADER:
+                    self._push_header_packet(self._packet)
                     self._http_parser_state = self.STATE_DATA
-
-                    if self._packet[0] != '$':
-                        raise InvalidBitstreamException(
-                            "Packet does not start with '$' packet-start "
-                            "indicator, synchronisation lost")
+                    # The first bit of the frame header is used to specify if
+                    # the next packet will be sent immediately.
+                    if ord(self._packet[0]) & 0x7F != 36:
+                        msg = ("Packet does not start with '$' packet-start "
+                               "indicator, synchronisation lost")
+                        self.warning("MMS packet header parsing error: %s", msg)
+                        self._saveErrorState(data[offset:])
+                        raise InvalidBitstreamException(msg)
                     if self._packet[1] == 'H':
                         self.debug("Header packet header received")
                         self._packet_type = self.PACKET_HEADER
@@ -478,10 +524,17 @@ class ASFHTTPParser(log.Loggable):
                     self._bytes_remaining = ((ord(self._packet[3]) << 8) |
                                              (ord(self._packet[2])))
                 else:
+                    self._push_payload_packet(self._packet)
                     if self._packet_type == self.PACKET_HEADER:
                         self.debug("Received ASF header, length %d",
                             len(self._packet))
-                        buf = self._getHeaderBuffer(self._packet)
+                        try:
+                            buf = self._getHeaderBuffer(self._packet)
+                        except Exception, e:
+                            self.warning("MMS packet header parsing error: %s",
+                                         log.getExceptionMessage(e))
+                            self._saveErrorState(data[offset:])
+                            raise e
                         self.debug("Appending header buffer of length %d",
                             len(buf))
                         self.debug("Buf starts with %x, %x, %x", ord(buf[0]), ord(buf[1]), ord(buf[2]))
@@ -489,7 +542,13 @@ class ASFHTTPParser(log.Loggable):
                     elif self._packet_type == self.PACKET_DATA:
                         self.log("Received ASF data, length %d",
                             len(self._packet))
-                        buf = self._getDataBuffer(self._packet)
+                        try:
+                            buf = self._getDataBuffer(self._packet)
+                        except Exception, e:
+                            self.warning("MMS packet data parsing error: %s",
+                                         log.getExceptionMessage(e))
+                            self._saveErrorState(data[offset:])
+                            raise e
                         self._asfbuffers.append(buf)
                     elif self._packet_type == self.PACKET_FILLER:
                         self.debug("Dropping filler packet")
@@ -537,32 +596,40 @@ class ASFSrc(gst.BaseSrc):
 
     def resetASFParser(self):
         self.asfparser.reset()
+        self._pushResetEvent()
 
     def do_unlock(self):
         self.queue.unblock()
 
     def do_create(self, offset, size):
         try:
-            (flowreturn, buf) = self.queue.pop()
+            while True:
+                (flowreturn, buf) = self.queue.pop()
+                if flowreturn is not None:
+                    return (flowreturn, buf)
+                self.get_pad('src').push_event(buf)
         except queue.InterruptedException:
             return (gst.FLOW_WRONG_STATE, None)
-
-        return (flowreturn, buf)
 
     def dataReceived(self, data):
         """
         Receive data from the twisted mainloop.
         Parses it to ASF, then adds to async queue.
         """
-        if not self.asfparser.parseData(data):
-            # EOS; but don't send an EOS, so we can recover if an encoder
-            # reconnects later
-            return
+        eos = not self.asfparser.parseData(data)
 
         while self.asfparser.hasBuffer():
             buf = self.asfparser.getBuffer()
 
             self.queue.push((gst.FLOW_OK, buf))
+
+        if eos:
+            self._pushResetEvent()
+
+    def _pushResetEvent(self):
+        s = gst.Structure('flumotion-reset')
+        e = gst.event_new_custom(gst.EVENT_CUSTOM_DOWNSTREAM, s)
+        self.queue.push((None, e))
 
 gobject.type_register(ASFSrc)
 
