@@ -1,3 +1,10 @@
+=== release 0.5.1 ===
+
+2009-08-25  Josep Joan Ribas  <jribas@flumotion.com>
+
+	* configure.ac:
+	Releasing 0.5.1
+
 2009-06-18  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/producers/wms/asfparse.py:
