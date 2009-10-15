@@ -1,3 +1,8 @@
+2009-10-15  Zaheer Abbas Merali  <zaheerabbas at merali dot org>
+
+	* configure.ac:
+	Adapt to changes from pub:r8195.
+
 2009-08-25  Josep Joan Ribas  <jribas@flumotion.com>
 
 	* configure.ac:

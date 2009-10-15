@@ -1,7 +1,12 @@
-AC_INIT(README)
+AC_INIT(flumotion-windowsmedia, 
+   0.5.1.1,
+   https://code.area51.fluendo.com/private/trac/newticket?component=flumotion-windowsmedia,
+   flumotion-windowsmedia)
+AM_INIT_AUTOMAKE([-Wno-portability])
 
-AS_VERSION(flumotion-windowsmedia, FW, 0, 5, 1, 1)
-AC_SUBST(RELEASE, $FW_RELEASE)
+AS_VERSION
+
+AS_NANO
 
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
@@ -10,7 +15,6 @@ AC_SUBST(FLU_REQ, 0.5.4)
 GST_010_SUPPORTED=yes
 AC_SUBST(GST_010_SUPPORTED)
 
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
 
 AS_AC_EXPAND(LIBDIR, $libdir)
