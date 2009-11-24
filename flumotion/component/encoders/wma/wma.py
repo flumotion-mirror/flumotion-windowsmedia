@@ -14,14 +14,17 @@
 
 from flumotion.component import feedcomponent
 
+
 class WMAEncoder(feedcomponent.ParseLaunchComponent):
     checkTimestamp = True
     checkOffset = True
+    resampler = 'legacyresample'
 
     def do_check(self):
         self.debug('running fluwmaenc check')
         from flumotion.worker.checks import check
         d = check.checkPlugin('fluwmaenc', 'gst-fluendo-wmaenc')
+
         def cb(result):
             for m in result.messages:
                 self.addMessage(m)
@@ -29,14 +32,17 @@ class WMAEncoder(feedcomponent.ParseLaunchComponent):
         return d
 
     def get_pipeline_string(self, properties):
-        if properties.has_key('drop-probability'):
-            return "identity drop-probability=%f silent=TRUE ! " \
-                "audioconvert ! " \
-                "fluwmaenc name=encoder" % properties['drop-probability']
-
-        return "audioconvert ! fluwmaenc name=encoder"
+        gstElements = ['audioconvert', 'fluwmaenc name=encoder']
+        if 'samplerate' in properties:
+            gstElements.insert(1, self.resampler)
+            gstElements.insert(2, 'audio/x-raw-int,rate=%d'
+                    % properties['samplerate'])
+        if 'drop-probability' in properties:
+            gstElements.insert(0, 'identity drop-probability=%f silent=TRUE'
+                    % properties['drop-probability'])
+        return " ! ".join(gstElements)
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')
-        if properties.has_key('bitrate'):
+        if 'bitrate' in properties:
             element.set_property('bitrate', properties['bitrate'])

@@ -23,6 +23,8 @@
       <properties>
         <property name="bitrate" type="int"
                   description="Bitrate to encode at (in bps)" />
+        <property name="samplerate" type="int"
+                  description="Samplerate to encode at (in Hz)"  />
         <property name="drop-probability" type="float"
                   description="workaround for loss of sync"  />
       </properties>
