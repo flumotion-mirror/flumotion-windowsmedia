@@ -1,5 +1,11 @@
 2009-12-07  Jan Urbanski  <jurbanski@flumotion.com>
 
+	* flumotion-windowsmedia.spec.in:
+	@RELEASE@ no longer gets substituted, use @PACKAGE_VERSION_RELEASE@.
+	See r23428.
+
+2009-12-07  Jan Urbanski  <jurbanski@flumotion.com>
+
 	* flumotion/component/encoders/wma/wma.py:
 	Only use legacyresample if the element is availalble. In older
 	GStreamer versions audioresample was the element that worked correctly
