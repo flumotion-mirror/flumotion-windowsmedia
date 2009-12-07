@@ -12,13 +12,13 @@
 
 # Headers in this file shall remain intact.
 
+from flumotion.common import gstreamer
 from flumotion.component import feedcomponent
 
 
 class WMAEncoder(feedcomponent.ParseLaunchComponent):
     checkTimestamp = True
     checkOffset = True
-    resampler = 'legacyresample'
 
     def do_check(self):
         self.debug('running fluwmaenc check')
@@ -33,13 +33,20 @@ class WMAEncoder(feedcomponent.ParseLaunchComponent):
 
     def get_pipeline_string(self, properties):
         gstElements = ['audioconvert', 'fluwmaenc name=encoder']
+
         if 'samplerate' in properties:
-            gstElements.insert(1, self.resampler)
+            resampler = 'audioresample'
+            if gstreamer.element_factory_exists('legacyresample'):
+                resampler = 'legacyresample'
+
+            gstElements.insert(1, resampler)
             gstElements.insert(2, 'audio/x-raw-int,rate=%d'
                     % properties['samplerate'])
+
         if 'drop-probability' in properties:
             gstElements.insert(0, 'identity drop-probability=%f silent=TRUE'
                     % properties['drop-probability'])
+
         return " ! ".join(gstElements)
 
     def configure_pipeline(self, pipeline, properties):

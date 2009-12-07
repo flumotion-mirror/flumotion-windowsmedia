@@ -1,3 +1,10 @@
+2009-12-07  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/encoders/wma/wma.py:
+	Only use legacyresample if the element is availalble. In older
+	GStreamer versions audioresample was the element that worked correctly
+	and was then renamed to legacyresample.
+
 2009-11-24  Andoni Morales Alastruey  <amorales@flumotion.com>
 
 	reviewed by: Sebastien Merle 
