@@ -1,3 +1,16 @@
+2009-12-11  Xavier Queralt Mateu  <xqueralt@flumotion.com>
+
+	* env.in:
+	Add flumotion's bin directory to the path so we can call flumotion from
+	subprojects.
+	* flumotion/component/muxers/asf/asf.py:
+	Fix pep8 error: remove trailing backspaces.
+	* flumotion/component/encoders/wma/wma.xml:
+	* flumotion/component/encoders/wmv/wmv.xml:
+	* flumotion/component/muxers/asf/asf.xml:
+	* flumotion/component/producers/wms/wms.xml:
+	Fix and add missing _description attributes
+
 2009-12-07  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion-windowsmedia.spec.in:

@@ -2,7 +2,8 @@
 
   <components>
     <component type="asf-muxer"
-               base="flumotion/component/muxers/asf">
+               base="flumotion/component/muxers/asf"
+               _description="ASF muxer for Windows Media Audio and Video">
       <source location="flumotion.component.muxers.asf.asf" />
 
       <eater name="default" multiple="yes" />
@@ -14,7 +15,7 @@
       </entries>
 
       <properties>
-        <property name="preroll-time" type="int" />
+        <property name="preroll-time" type="int" _description="ASF Preroll time"/>
       </properties>
 
       <wizard _description="ASF" type="muxer" 

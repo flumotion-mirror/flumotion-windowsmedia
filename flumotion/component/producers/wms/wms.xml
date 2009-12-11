@@ -1,7 +1,8 @@
 <registry>
   <components>
     <component type="windows-media-server-producer"
-               base="flumotion/component/producers/wms">
+               base="flumotion/component/producers/wms"
+               _description="Windows Media Server Producer">
       <source location="flumotion.component.producers.wms.wms"/>
       <feeder name="default"/>
 
@@ -12,39 +13,44 @@
 
       <properties>
         <property name="mount-point" type="string"
-                  description="The mount point the stream is to be produced on"/>
+                  _description="The mount point the stream is to be produced on"/>
         <property name="type" type="string"
-                  description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
+                  _description="'master' to listen on a port, or 'slave' to slave to a porter, or 'pull' to pull from an encoder (default master)" />
 
-        <property name="bouncer" type="string" description="Name of bouncer to use for authentication" />
-        <property name="secure" type="bool" description="If false, authentication (master mode only) will be insecure, allowing replay attacks" />
+        <property name="bouncer" type="string"
+                  _description="Name of bouncer to use for authentication" />
+        <property name="secure" type="bool"
+                  _description="If false, authentication (master mode only) will be insecure, allowing replay attacks" />
 
-        <property name="ignore-keyframes" type="string" description="Deprecated; has no effect"/>
+        <property name="ignore-keyframes" type="string"
+                  _description="Deprecated; has no effect"/>
 
         <!-- If type is 'master' (default) or 'pull'-->
         <property name="port" type="int"
-                  description="Port to listen on (if type is 'master'), or port to connect to for 'pull' mode" />
+                  _description="Port to listen on (if type is 'master'), or port to connect to for 'pull' mode" />
 
         <!-- If type is 'pull' -->
-        <property name="host" type="string" description="Hostname to connect to in pull mode" />
+        <property name="host" type="string"
+                  _description="Hostname to connect to in pull mode" />
         <property name="wms-compatible" type="bool"
-                  description="If true, the component will request the stream in a more WMS-friendly way (default false)" />
+                  _description="If true, the component will request the stream in a more WMS-friendly way (default false)" />
         <property name="wms-path" type="string"
-                  description="The path on which the remote WMS is going to provide the stream" />
+                  _description="The path on which the remote WMS is going to provide the stream" />
 
         <!-- If type is 'slave' -->
         <property name="porter-socket-path" type="string"
-                  description="Path to the socket to communicate with the porter" />
+                  _description="Path to the socket to communicate with the porter" />
         <property name="porter-username" type="string"
-                  description="Username to authenticate with to the porter" />
+                  _description="Username to authenticate with to the porter" />
         <property name="porter-password" type="string"
-                  description="Password to authenticate with to the porter" />
+                  _description="Password to authenticate with to the porter" />
 
 
       </properties>
     </component>
     <component type="http-digest-bouncer"
-               base="flumotion/component/producers/wms">
+               base="flumotion/component/producers/wms"
+               _description="HTTP digest bouncer">
       <source location="flumotion.component.producers.wms.digest"/>
 
       <entries>
@@ -54,7 +60,7 @@
 
       <properties>
         <property name="filename" type="string"
-                  description="Name of file containing usernames and password hashes"/>
+                  _description="Name of file containing usernames and password hashes"/>
       </properties>
     </component>
   </components>

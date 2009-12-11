@@ -31,8 +31,8 @@ class ASFMuxer(feedcomponent.MultiInputParseLaunchComponent):
 
     def get_muxer_string(self, properties):
         return 'fluasfmux broadcast=true name=muxer '
-    
+
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('muxer')
         if properties.has_key('preroll-time'):
-            element.set_property('preroll-time', properties['preroll-time'])    
+            element.set_property('preroll-time', properties['preroll-time'])

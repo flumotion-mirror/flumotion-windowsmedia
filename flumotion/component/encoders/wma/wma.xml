@@ -2,7 +2,8 @@
 
   <components>
     <component type="wma-encoder"
-               base="flumotion/component/encoders/wma">
+               base="flumotion/component/encoders/wma"
+               _description="Windows Media Audio Encoder">
       <source location="flumotion.component.encoders.wma.wma" />
 
       <eater name="default" />
@@ -22,11 +23,11 @@
 
       <properties>
         <property name="bitrate" type="int"
-                  description="Bitrate to encode at (in bps)" />
+                  _description="Bitrate to encode at (in bps)" />
         <property name="samplerate" type="int"
-                  description="Samplerate to encode at (in Hz)"  />
+                  _description="Samplerate to encode at (in Hz)"  />
         <property name="drop-probability" type="float"
-                  description="workaround for loss of sync"  />
+                  _description="workaround for loss of sync"  />
       </properties>
 
     </component>

@@ -2,7 +2,8 @@
 
   <components>
     <component type="wmv-encoder"
-               base="flumotion/component/encoders/wmv">
+               base="flumotion/component/encoders/wmv"
+               _description="Windows Media Video Encoder">
       <source location="flumotion.component.encoders.wmv.wmv" />
 
       <eater name="default" />
@@ -24,12 +25,17 @@
 
       <properties>
         <property name="bitrate" type="int"
-                  description="Bitrate to encode at (in bps)" />
-        <property name="version" type="int" />
-        <property name="complexity" type="int" />
-        <property name="sharpness" type="int" />
-        <property name="key-frame-distance" type="int" />
-        <property name="buffer-delay" type="int" />
+                  _description="Bitrate to encode at (in bps)" />
+        <property name="version" type="int"
+                  _description="Codec version to use (3 is default)"/>
+        <property name="complexity" type="int"
+                  _description="Defines the encoder complexity/speed from 0 (fast) to 4 (slow)"/>
+        <property name="sharpness" type="int"
+                  _description="Defines the video sharpness/smoothness (0 is smooth, 100 is sharp)"/>
+        <property name="key-frame-distance" type="int"
+                  _description="Defines the distance between each key frame in milliseconds."/>
+        <property name="buffer-delay" type="int"
+                  _description="Defines the buffer delay in milliseconds."/>
       </properties>
 
     </component>
