@@ -18,7 +18,7 @@
         <property name="preroll-time" type="int" _description="ASF Preroll time"/>
       </properties>
 
-      <wizard _description="ASF" type="muxer" 
+      <wizard _description="Windows Media (ASF)" type="muxer" 
               feeder="default" eater="default">
         <accept-format media-type="wma"/>
         <accept-format media-type="wmv"/>

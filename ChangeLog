@@ -1,3 +1,9 @@
+2010-01-21  Josep Joan Ribas  <jribas@flumotion.com>
+
+	* flumotion/component/muxers/asf/asf.xml:
+	Change asf muxer description in wizard
+	Closes #6853
+
 2009-12-11  Xavier Queralt Mateu  <xqueralt@flumotion.com>
 
 	* env.in:
