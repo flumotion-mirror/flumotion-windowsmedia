@@ -12,6 +12,8 @@
       <entries>
         <entry type="component" location="asf.py"
                function="ASFMuxer" />
+        <entry type="wizard" location="wizard_gtk.py"
+               function="ASFWizardPlugin" />
       </entries>
 
       <properties>
@@ -29,8 +31,7 @@
   </components>
 
   <bundles>
-
-    <bundle project="windowsmedia" name="asf-component">
+    <bundle project="windowsmedia" name="asf-base">
         <dependencies>
             <dependency name="component" />
         </dependencies>
@@ -38,6 +39,31 @@
         <directories>
             <directory name="flumotion/component/muxers/asf">
                 <filename location="__init__.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="asf-wizard">
+        <dependencies>
+            <dependency name="asf-base" />
+            <dependency name="muxers-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/muxers/asf">
+                <filename location="wizard_gtk.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="asf-component">
+        <dependencies>
+            <dependency name="component" />
+            <dependency name="asf-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/muxers/asf">
                 <filename location="asf.py" />
             </directory>
         </directories>
