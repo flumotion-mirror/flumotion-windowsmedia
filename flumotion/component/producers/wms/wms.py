@@ -775,8 +775,10 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
 
     def configure_pipeline(self, pipeline, properties):
 
+        enable_error_dumps = properties.get('enable-error-dumps', False)
+
         pushmode = properties.get('type', 'master') != 'pull'
-        self._srcelement = asfparse.ASFSrc("asfsrc", pushmode)
+        self._srcelement = asfparse.ASFSrc("asfsrc", pushmode, enable_error_dumps)
 
         pipeline.add(self._srcelement)
 

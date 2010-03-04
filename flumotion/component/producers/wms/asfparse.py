@@ -247,13 +247,14 @@ class ASFHTTPParser(log.Loggable):
     MAX_RING_SIZE = 5
     MAX_REMAINING_SIZE = 65*1204
 
-    def __init__(self, push):
+    def __init__(self, push, enable_error_dumps=False):
         # There are two variants on the format. One is used in push mode, one in
         # pull mode. The only difference I've noted is that each packet in
         # pull mode has a 12 byte header, push mode is 4 bytes. The 12 byte
         # header starts with the same 4 bytes, then has an extra 8 bytes that
         # I don't know the meaning of (but ignoring them seems to work ok)
         self._pushmode = push
+        self._enable_dumps = enable_error_dumps
         self._packet_ring = []
         self._header_packet = None
         self.debug("Initialised in %s", push and "push" or "pull")
@@ -441,6 +442,9 @@ class ASFHTTPParser(log.Loggable):
         return buf
 
     def _saveErrorState(self, remaining):
+        if not self._enable_dumps:
+            return
+
         if self._header_packet is not None:
             self.warning("Packet header without payload")
             self._packet_ring.append(self._header_packet)
@@ -587,12 +591,12 @@ class ASFSrc(gst.BaseSrc):
                         gst.caps_from_string("video/x-ms-asf")),
         )
 
-    def __init__(self, name, push=True):
+    def __init__(self, name, push=True, enable_error_dumps=False):
         gst.BaseSrc.__init__(self)
         self.set_name(name)
 
         self.queue = queue.AsyncQueue()
-        self.asfparser = ASFHTTPParser(push)
+        self.asfparser = ASFHTTPParser(push, enable_error_dumps)
 
     def resetASFParser(self):
         self.asfparser.reset()

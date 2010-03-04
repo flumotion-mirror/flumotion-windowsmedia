@@ -45,6 +45,8 @@
         <property name="porter-password" type="string"
                   _description="Password to authenticate with to the porter" />
 
+        <property name="enable-error-dumps" type="bool"
+                  _description="If true, the component will dump the state of the ASF parser on errors; default: false" />
 
       </properties>
     </component>
