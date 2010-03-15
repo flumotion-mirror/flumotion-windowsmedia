@@ -1,3 +1,13 @@
+2010-03-15  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/producers/wms/wms.py:
+	Use correct Twisted API to get the push-id value from the
+	cookie. Original coding broken on cookie headers that contained more
+	than one value, for instance "push-id=0; my-key=foo".
+	It has been observed in the field, that sometimes WMS sends headers
+	with push-id specified multiple times and with other cookie keys (like
+	the google tracker __utma key).
+
 2010-03-04  Sébastien Merle  <sebastien@flumotion.com>
 
 	reviewed by: Jan Urbanski

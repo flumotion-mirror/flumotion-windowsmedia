@@ -291,12 +291,7 @@ class WMSRequest(server.Request, log.Loggable):
         self.setHeader(HackString("Content-Length"), 0)
         self.setHeader("Pragma", "no-cache,timeout=60000")
 
-        pushId = 0
-        if self.hasHeader("Cookie"):
-            cookieKV = self.getHeader("Cookie")
-            cookieKey, cookieVal = cookieKV.split('=')
-            if cookieKey == 'push-id':
-                pushId = int(cookieVal)
+        pushId = int(self.getCookie('push-id') or 0)
 
         # Handle the rest of this as deferred crap
         d = defer.maybeDeferred(digester.authenticate, self, pushId)
