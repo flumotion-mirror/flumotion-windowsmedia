@@ -479,17 +479,15 @@ class WMSChannel(http.HTTPChannel, log.Loggable):
     # local implementations adding debugging info...
     def connectionMade(self):
         peer = self.transport.getPeer()
-        self.debug('connection made from: %s:%d', peer.host, peer.port)
+        self.info('connection made from: %s:%d', peer.host, peer.port)
         http.HTTPChannel.connectionMade(self)
         self._startLogging()
 
     def connectionLost(self, reason):
         self._stopLogging()
-        self.debug('lost connection (streaming: %r): %r',
-                   bool(self._streaming_post), reason)
         peer = self.transport.getPeer()
-        self.debug('lost connection to: %s:%d (%r)',
-                   peer.host, peer.port, self.transport)
+        self.info('lost connection to: %s:%d (streaming: %r) (%r)',
+                   peer.host, peer.port, bool(self._streaming_post), reason)
         http.HTTPChannel.connectionLost(self, reason)
 
     def requestDone(self, request):
@@ -711,6 +709,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             else:
                 factory = WMSPullFactory(self._srcelement)
 
+            self.info("Pulling from %s:%d", host, port)
             reactor.connectTCP(host, port, factory)
         elif self.type == 'slave':
             # Slaved to a porter...
@@ -725,7 +724,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
                 self._porterPassword)
             self._pbclient.startLogin(creds, self._pbclient.medium)
 
-            self.debug("Starting porter login at \"%s\"", self._porterPath)
+            self.info('Starting porter login at "%s"', self._porterPath)
             # This will eventually cause d to fire
             reactor.connectWith(
                 fdserver.FDConnector, self._porterPath,
@@ -734,7 +733,7 @@ class WindowsMediaServer(feedcomponent.ParseLaunchComponent):
             # Streamer is standalone.
             factory = WMSPushFactory(self._authenticator, self._srcelement)
             try:
-                self.debug('Listening on %d' % self.port)
+                self.info('Listening on tcp port %d', self.port)
                 reactor.listenTCP(self.port, factory)
             except error.CannotListenError:
                 t = 'Port %d is not available.' % self.port

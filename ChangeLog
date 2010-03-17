@@ -1,3 +1,11 @@
+2010-03-17  Xavier Martinez-Hidalgo  <xmartinez@flumotion.com>
+
+	reviewed by: Jan Urbanski
+
+	* flumotion/component/producers/wms/wms.py:
+	Set to INFO log level client connect/disconnect messages and
+	initial server port binding/connect.
+
 2010-03-15  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion/component/producers/wms/wms.py:
