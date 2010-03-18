@@ -1,5 +1,4 @@
-# -*- Mode: Python -*-
-# vi:si:et:sw=4:sts=4:ts=4
+# -*- test-case-name: flumotion.test.test_component_wms -*-
 #
 # Flumotion - a streaming media server
 # Copyright (C) 2007,2008 Fluendo, S.L. (www.fluendo.com).
@@ -333,8 +332,7 @@ class WMSRequest(server.Request, log.Loggable):
                         "connection")
                     factory.streamingRequest.finish(disconnect=True)
 
-                    self.debug('resetting ASF parser...')
-                    factory.srcelement.resetASFParser()
+                factory.srcelement.resetASFParser()
 
                 if pushId:
                     self.headers["Set-Cookie"] = "push-id=%d" % pushId

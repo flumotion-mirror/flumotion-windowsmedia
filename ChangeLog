@@ -1,3 +1,13 @@
+2010-03-18  Xavier Martinez-Hidalgo  <xmartinez@flumotion.com>
+
+	reviewed by: Sebastien Merle
+
+	* flumotion/component/producers/wms/asfparse.py:
+	* flumotion/component/producers/wms/wms.py:
+	* flumotion/test/test_component_wms.py:
+	* flumotion/test/test_component_wms.py (added):
+	Reset asf parser after a successful pushsetup request.  See #8273.
+
 2010-03-17  Xavier Martinez-Hidalgo  <xmartinez@flumotion.com>
 
 	reviewed by: Jan Urbanski

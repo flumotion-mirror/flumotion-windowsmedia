@@ -599,6 +599,7 @@ class ASFSrc(gst.BaseSrc):
         self.asfparser = ASFHTTPParser(push, enable_error_dumps)
 
     def resetASFParser(self):
+        self.debug('resetting ASF parser...')
         self.asfparser.reset()
         self._pushResetEvent()
 
