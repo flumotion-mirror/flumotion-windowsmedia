@@ -1,3 +1,8 @@
+2010-03-18  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/test/test_component_wms.py:
+	Test handling cookies with multiple values, see r29458.
+
 2010-03-18  Xavier Martinez-Hidalgo  <xmartinez@flumotion.com>
 
 	reviewed by: Sebastien Merle

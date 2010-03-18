@@ -25,6 +25,7 @@ base.DelayedCall.debug = True
 class Auth:
 
     def authenticate(self, request, pushId):
+        self.pushId = pushId
         code, pushId, stale = http.OK, pushId, False
         return code, pushId, stale
 
@@ -63,3 +64,12 @@ class TestWMSPush(testsuite.TestCase):
             '\r\n')
         self.debug('%r', self.transport.value())
         self.assertTrue(self.src.reset)
+
+    def testCookiesWithMultipleKeys(self):
+        self.channel.dataReceived(
+            'POST /wmenc.wsf HTTP/1.1\r\n'
+            'Content-Type: application/x-wms-pushsetup\r\n'
+            'Cookie: funny-cookie=2 ; push-id=123 ; hilarious-cookie=3\r\n'
+            '\r\n')
+        self.debug('%r', self.transport.value())
+        self.assertEquals(self.factory.digester.pushId, 123)
