@@ -95,6 +95,8 @@ misc/Makefile
 flumotion/Makefile
 flumotion/test/Makefile
 flumotion/component/Makefile
+flumotion/component/consumers/Makefile
+flumotion/component/consumers/wms/Makefile
 flumotion/component/encoders/Makefile
 flumotion/component/encoders/wmv/Makefile
 flumotion/component/encoders/wma/Makefile
