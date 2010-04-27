@@ -1,12 +1,10 @@
 include $(top_srcdir)/common/python.mk
 
-componentdir = $(libdir)/flumotion/python/flumotion/component/consumers/wms
+componentdir = $(libdir)/flumotion/python/flumotion/component/common
 
 component_PYTHON = \
 	__init__.py \
-	wmsconsumer.xml \
-	wmsconsumer.py \
-	pull_producer.py
+	compcommon.xml
 
 component_DATA = 
 

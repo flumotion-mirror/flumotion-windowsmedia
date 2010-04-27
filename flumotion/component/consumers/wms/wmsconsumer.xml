@@ -1,0 +1,59 @@
+<registry>
+
+  <components>
+    <component type="wms-streamer"
+               base="flumotion/component/consumers/wms"
+               _description="A consumer that streams to Windows Media Services.">
+	  <source location="flumotion.component.consumers.wms.wmsconsumer" />
+
+      <eater name="default" />
+
+      <entries>
+        <entry type="component" location="wmsconsumer.py"
+               function="WMSConsumer" />
+      </entries>
+
+      <sockets>
+        <socket type="flumotion.component.plugs.base.ComponentPlug" />
+      </sockets>
+
+      <properties>
+        <property name="mount-point" type="string"
+          _description="The mount point on which the stream can be accessed." />
+        <property name="port" type="int"
+          _description="The port to listen on." />
+      </properties>
+    </component>
+  </components>
+
+  <bundles>
+
+    <bundle project="windowsmedia" name="wmsconsumer-base">
+        <dependencies>
+            <dependency name="component-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/consumers/wms">
+                <filename location="__init__.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle project="windowsmedia" name="wmsconsumer-component">
+        <dependencies>
+            <dependency name="component" />
+            <dependency name="wmsconsumer-base" />
+            <dependency name="wms-common" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/consumers/wms">
+                <filename location="wmsconsumer.py" />
+                <filename location="pull_producer.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+</registry>

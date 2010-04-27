@@ -1,0 +1,17 @@
+<registry>
+
+  <bundles>
+
+    <bundle project="windowsmedia" name="component-common">
+        <dependencies>
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/common">
+                <filename location="__init__.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+</registry>

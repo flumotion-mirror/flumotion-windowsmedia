@@ -1,0 +1,20 @@
+<registry>
+
+  <bundles>
+
+    <bundle project="windowsmedia" name="wms-common">
+        <dependencies>
+            <dependency name="component-common" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/common/wms">
+                <filename location="__init__.py" />
+                <filename location="common.py" />
+                <filename location="http.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+</registry>
