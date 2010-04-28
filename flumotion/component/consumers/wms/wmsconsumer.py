@@ -64,8 +64,7 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self._tport = None
 
     def get_pipeline_string(self, properties):
-        return "appsink name=appsink"
-        #return "fakesink silent=1"
+        return "appsink name=appsink sync=false"
 
     def check_properties(self, props, addMessage):
         pass
@@ -122,4 +121,4 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     ### END OF THREAD-AWARE CODE
 
     def _processBuffer(self, buffer):
-        pass
+        self.log("Got buffer %s", buffer.timestamp)
