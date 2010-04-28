@@ -64,8 +64,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self._tport = None
 
     def get_pipeline_string(self, properties):
-        #return "appsink name=appsink"
-        return "fakesink silent=1"
+        return "appsink name=appsink"
+        #return "fakesink silent=1"
 
     def check_properties(self, props, addMessage):
         pass
@@ -76,11 +76,11 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
             mountPoint = '/' + mountPoint
         self.mountPoint = mountPoint
 
-#        appsink = pipeline.get_by_name('appsink')
-#        appsink.set_property('emit-signals', True)
-#        appsink.connect("new-preroll", self._new_preroll)
-#        appsink.connect("new-buffer", self._new_buffer)
-#        appsink.connect("eos", self._eos)
+        appsink = pipeline.get_by_name('appsink')
+        appsink.set_property('emit-signals', True)
+        appsink.connect("new-preroll", self._new_preroll)
+        appsink.connect("new-buffer", self._new_buffer)
+        appsink.connect("eos", self._eos)
 
         self.port = int(properties.get('port', 8800))
 
