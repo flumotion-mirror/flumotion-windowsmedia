@@ -4,7 +4,8 @@ componentdir = $(libdir)/flumotion/python/flumotion/component/common
 
 component_PYTHON = \
 	__init__.py \
-	compcommon.xml
+	compcommon.xml \
+	http.py
 
 component_DATA = 
 

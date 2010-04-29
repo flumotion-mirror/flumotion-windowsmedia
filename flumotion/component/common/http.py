@@ -50,18 +50,21 @@ HTTP_MULTIPLE_FIELD_HEADERS = set(["accept",
                                    "x-accept-authentication",
                                    "supported"])
 
+HTTP11 = "HTTP/1.1"
+HTTP10 = "HTTP/1.0"
+
 
 def parseUserAgent(agent_header):
-    agents = agent_header.split("", 1)
+    agents = agent_header.split(" ", 1)
     parts = agents[0].split(",", 1)
     name, version = parts[0].split("/", 1)
     digits = version.split(".")
 
     def try2convert(s):
         try:
-            int(s)
+            return int(s)
         except ValueError:
-            s
+            return s
 
     return name, tuple([try2convert(s) for s in digits])
 
@@ -128,19 +131,23 @@ class Request(BaseRequest, log.Loggable):
 
         BaseRequest.__init__(self, channel)
 
-        self.protocol = info.protocol
+        self.request_protocol = info.protocol
+
         self.method = info.method
         self.uri = info.uri
 
+        self._body_length = info.length
         self._received_headers = {}
         self._received_cookies = {}
         self._received_length = None
         self.received_bytes = 0
 
+        self.protocol = info.protocol
+
         self._headers = {}
         self._cookies = {}
 
-        self._length = 0
+        self._length = None # No length by default
         self.bytes_sent = 0 # Bytes of BODY written (headers do not count)
 
         self.initiated = False # If the request has been initiated
@@ -154,8 +161,6 @@ class Request(BaseRequest, log.Loggable):
         self.status_message = http.RESPONSES[self.status_code]
 
         self._parseHeaders(info.headers)
-
-        self.setLength(0)
 
         self.transport = None
         if not active:
@@ -185,13 +190,22 @@ class Request(BaseRequest, log.Loggable):
         assert not self.initiated, "Already initiated"
         self.initiated = True
 
-        if self.transport is None:
-            self.activate()
-
         try:
             self.onInitiate()
         except HTTPError, e:
+            self.warning("Error during initiation: %s",
+                         log.getExceptionMessage(e))
             self._makeError(e.status_code, e.status_message)
+        except Exception, e:
+            self.warning("Error during initiation: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(http.INTERNAL_SERVER_ERROR)
+            raise
+
+        if self.transport is None:
+            # Started active, so activate right away
+            self.activate()
+
 
     def activate(self):
         self.debug('Activating %s', self.log_ident)
@@ -203,13 +217,22 @@ class Request(BaseRequest, log.Loggable):
         if old is not None:
             self.transport.write(old.getvalue())
 
+        if self.finished:
+            # The request was finished before being activated
+            reactor.callLater(0, self._cleanup)
+            return
+
         try:
             self.onActivate()
         except HTTPError, e:
-            self._makeError(e.code, e.message)
-
-        if self.finished:
-            reactor.callLater(0, self._cleanup)
+            self.warning("Error during activation: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(e.status_code, e.status_message)
+        except Exception, e:
+            self.warning("Error during activation: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(http.INTERNAL_SERVER_ERROR)
+            raise
 
     def dataReceived(self, data):
         self.received_bytes += len(data)
@@ -220,8 +243,15 @@ class Request(BaseRequest, log.Loggable):
         try:
             self.onDataReceived(data)
         except HTTPError, e:
-            self._makeError(e.code, e.message)
+            self.warning("Error during data processing: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(e.status_code, e.status_message)
             return
+        except Exception, e:
+            self.warning("Error during data processing: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(http.INTERNAL_SERVER_ERROR)
+            raise
 
     def allContentReceived(self):
         self.debug('All content received on %s', self.log_ident)
@@ -234,8 +264,15 @@ class Request(BaseRequest, log.Loggable):
         try:
             self.onAllContentReceived()
         except HTTPError, e:
-            self._makeError(e.code, e.message)
+            self.warning("Error during finalization: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(e.status_code, e.status_message)
             return
+        except Exception, e:
+            self.warning("Error during finalization: %s",
+                         log.getExceptionMessage(e))
+            self._makeError(http.INTERNAL_SERVER_ERROR)
+            raise
 
     def connectionLost(self, reason):
         self.debug('Connection lost for %s: %s', self.log_ident,
@@ -256,17 +293,32 @@ class Request(BaseRequest, log.Loggable):
         assert not self.finished, "Request already finished"
         self.finished = True
 
-        self.writeHeaders()
-
         # If not all the body has been read, we must disconnect
-        if not self.received:
+        if self._body_length and not self.received:
             self.persistent = False
+
+        self.writeHeaders()
 
         if self.activated:
             reactor.callLater(0, self._cleanup)
 
     def writeHeaders(self):
         if not self.writing:
+            # Last header modifications
+
+            if self._length is None:
+                # If no length specified, it can't be a persistent connection
+                self.persistent = False
+
+            if self.protocol == HTTP11:
+                if not self.persistent:
+                    self.setHeader("connection", "close")
+            elif self.protocol == HTTP10:
+                if self.persistent:
+                    self.setHeader("connection", "Keep-Alive")
+            else:
+                self.persistent = False
+
             self.debug('Writing headers on %s', self.log_ident)
             self.writing = True
 
@@ -287,7 +339,7 @@ class Request(BaseRequest, log.Loggable):
 
             seq = []
             for line in lines:
-                self.log("<<< %s", line)
+                self.debug("<<< %s", line)
                 seq.append(line)
                 seq.append("\r\n")
             seq.append("\r\n")
@@ -295,12 +347,14 @@ class Request(BaseRequest, log.Loggable):
             self.transport.writeSequence(seq)
 
     def write(self, data):
-        self.writeHeaders()
-
         if data:
-            if len(data) + self.bytes_sent > self._length:
-                raise HTTPError("Ask to send more data than "
-                                "the specified content length")
+            self.writeHeaders()
+            if self._length is not None:
+                total = len(data) + self.bytes_sent
+                if total > self._length:
+                    raise HTTPError("Ask to send %d more bytes than "
+                                    "the specified content length %d"
+                                    % (total - self._length, self._length))
             self.bytes_sent += len(data)
             self.transport.write(data)
 
@@ -333,7 +387,9 @@ class Request(BaseRequest, log.Loggable):
                 fields.extend(value)
             else:
                 fields.extend([f.strip() for f in value.split(",")])
-        self._headers[header] = value
+            self._headers[header] = fields
+        else:
+            self._headers[header] = value
 
     def clearHeaders(self):
         assert not self.writing, "Header already sent"
@@ -345,8 +401,8 @@ class Request(BaseRequest, log.Loggable):
 
     def setLength(self, length):
         assert not self.writing, "Header already sent"
-        self._length = length
-        self.setHeader("content-length", int(length))
+        self._length = int(length)
+        self.setHeader("content-length", str(length))
 
     def setResponseCode(self, code, message=None):
         assert not self.writing, "Header already sent"
@@ -365,7 +421,7 @@ class Request(BaseRequest, log.Loggable):
         agent = self.getRecvHeader("user-agent")
         if not agent:
             return "unknown", None
-        parseUserAgent(agent)
+        return parseUserAgent(agent)
 
 
     ### Private Methods ###
@@ -394,13 +450,11 @@ class Request(BaseRequest, log.Loggable):
 
             # Check if the connection should be kept alive
             if key == 'connection':
-                tokens = map(str.lower, value.split(' '))
-                if 'close' in tokens:
-                    # Set the response header to match
-                    self.setHeader('connection', 'close')
-                    self.persistent = False
+                tokens = map(str.lower, value)
+                if self.request_protocol == HTTP11:
+                    self.persistent = 'close' not in tokens
                 else:
-                    self.persistent = True
+                    self.persistent = 'keep-alive' in tokens
 
             # Parse cookies
             if key == 'cookie':
@@ -415,7 +469,6 @@ class Request(BaseRequest, log.Loggable):
     def _cleanup(self):
         self.debug('%s done; received %s out of %s bytes',
                    self.log_ident, self.received_bytes, self._received_length)
-
         self.channel.requestDone(self)
         del self.channel
 
@@ -448,7 +501,9 @@ class ErrorRequest(BaseRequest):
         del self.channel
 
 
-class Requestfactory(object):
+class Requestfactory(object, log.Loggable):
+
+    logCategory = "http-reqfact"
 
     def buildRequest(self, channel, info, active):
         return Request(channel, info, active)
@@ -498,6 +553,7 @@ class RequestInfo(object):
         self.headers = {}
         self.method = None
         self.uri = None
+        self.length = None
 
 
 class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
@@ -505,7 +561,6 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
     logCategory = "http-channel"
     requestFactory = None
     max_headers = 20
-    protocol = "HTTP/1.1"
 
     STATE_REQLINE = 0
     STATE_HEADERS = 1
@@ -516,9 +571,9 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
     idle_timeout = IDLE_TIMEOUT
     inactivity_timeout = INACTIVITY_TIMEOUT
 
-    def __init__(self):
+    def __init__(self, force_version=None):
         self.authenticated = False
-
+        self.force_version = force_version
         self._requests = []
 
         self.addTimeout("connect", self.connect_timeout,
@@ -536,10 +591,15 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
 
     def requestDone(self, request):
         """Called by the active request when it is done writing"""
+        if self._requests is None:
+            # Channel been cleaned up because the connection was lost.
+            return
+
         assert request == self._requests[0], "Unexpected request done"
         del self._requests[0]
 
         if request.persistent:
+            # Activate the next request in the pipeline if any
             if self._requests:
                 self._requests[0].activate()
         else:
@@ -633,7 +693,8 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
 
         def respond():
             msg = message or http.RESPONSES.get(code, "Unknown Status")
-            resp = "%s %d %s\r\n\r\n" % (self.protocol, code, msg)
+            protocol = self._protocol or HTTP10
+            resp = "%s %d %s\r\n\r\n" % (protocol, code, msg)
             self.transport.write(resp)
 
         # If we can, respond with the error status
@@ -641,8 +702,7 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
             if not self._requests[0].writing:
                 respond()
         else:
-            if self._reqinfo:
-                respond()
+            respond()
 
         self.transport.loseConnection()
 
@@ -652,6 +712,7 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
 
     def _reset(self):
         self._state = self.STATE_REQLINE
+        self._protocol = None
         self._header = ''
         self._length = 0
         self._remaining = 0
@@ -685,7 +746,13 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
             return
 
         method, uri, protocol = parts
-        if protocol != self.protocol:
+
+        if protocol != HTTP10 and protocol != HTTP11:
+            self._httpBadRequest()
+
+        self._protocol = protocol
+
+        if self.force_version and protocol != self.force_version:
             self._httpVersionNotSupported()
             return
 
@@ -725,14 +792,16 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
         data = data.strip()
 
         if header == 'content-length':
-            self._length = int(data)
-            self._remaining = int(data)
+            length = int(data)
+            info.length = length
+            self._length = length
+            self._remaining = length
 
         if header in HTTP_MULTIPLE_FIELD_HEADERS:
             if header not in info.headers:
                 info.headers[header] = []
             fields = info.headers[header]
-            fields.extends([f.strip() for f in data.split(",")])
+            fields.extend([f.strip() for f in data.split(",")])
         else:
             info.headers[header] = data
 
@@ -774,8 +843,9 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
         self.resetTimeout("inactivity")
 
 
-class Factory(protocol.ServerFactory):
+class Factory(protocol.ServerFactory, log.Loggable):
 
+    logCategory = "http-factory"
     protocol = Channel
     requestFactoryClass = Requestfactory
 

@@ -5,7 +5,7 @@ componentdir = $(libdir)/flumotion/python/flumotion/component/common/wms
 component_PYTHON = \
 	__init__.py \
 	common.py \
-	http.py
+	wmscommon.xml
 	
 component_DATA = 
 

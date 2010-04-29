@@ -26,7 +26,7 @@ from twisted.web import http
 
 from flumotion.common import log
 
-from flumotion.component.common.wms import http as wmshttp
+from flumotion.component.common import http as fhttp
 from flumotion.component.common.wms import common
 
 
@@ -36,10 +36,10 @@ SERVER_IDENT = "Rex/12.0.7600.16385 (Flumotion Streaming Server)"
 LOG_CATEGORY = "wms-pull"
 
 
-class WMSPullRequest(wmshttp.Request):
+class WMSPullRequest(fhttp.Request):
 
     def __init__(self, channel, info, active):
-        wmshttp.Request.__init__(self, channel, info, active)
+        fhttp.Request.__init__(self, channel, info, active)
         self.version = None
 
     def onInitiate(self):
@@ -58,6 +58,9 @@ class WMSPullRequest(wmshttp.Request):
             self.warning("Media server version not supported: %r", version)
             self.error(http.FORBIDDEN)
         self.version = version
+
+        # Force HTTP 1.0 response
+        self.protocol = fhttp.HTTP10
 
         self.setHeader("Server", SERVER_IDENT)
         self.setHeader("Cache-Control", "no-cache")
@@ -83,10 +86,12 @@ class WMSPullDescribeRequest(WMSPullRequest):
     def onInitiate(self):
         WMSPullRequest.onInitiate(self)
         self.setHeader("Content-Type", "application/vnd.ms.wms-hdr.asfv1")
-        self.setHeader("Connection", "Keep-Alive")
 
     def onActivate(self):
-        self.write("SOME MMS-ENCAPSULED ASF HEADER")
+        self.setResponseCode(http.OK)
+        data = "SOME MMS-ENCAPSULED ASF HEADER"
+        self.setLength(len(data))
+        self.write(data)
         self.finish()
 
 
@@ -97,32 +102,33 @@ class WMSPullPlayRequest(WMSPullRequest):
         self.setHeader("Content-Type", "application/x-mms-framed")
 
     def onActivate(self):
+        self.setResponseCode(http.OK)
         self.write("SOME MMS-ENCAPSULED ASF HEADER")
         self.write("SOME MMS-ENCAPSULED ASF DATA")
         self.finish()
 
 
-class WMSPullRequestFactory(wmshttp.Requestfactory):
+class WMSPullRequestFactory(fhttp.Requestfactory):
 
     def buildRequest(self, channel, info, active):
         agent = info.headers.get("user-agent")
-        name, version, = wmshttp.parseUSerAgent(agent)
+        name, version, = fhttp.parseUserAgent(agent)
         if name != "NSServer" or version is None:
             self.warning("Not a windows media server: %s", agent)
-            return wmshttp.ErrorRequest(channel, info, active, http.FORBIDDEN)
+            return fhttp.ErrorRequest(channel, info, active, http.FORBIDDEN)
         if version >= (7,0):
             pragmas = info.headers.get("pragma")
-            if pragmas and "xPlayStrm=1" not in pragmas:
+            if not (pragmas and "xPlayStrm=1" in pragmas):
                 return WMSPullDescribeRequest(channel, info, active)
         return WMSPullPlayRequest(channel, info, active)
 
 
-class WMSPullFactory(wmshttp.Factory):
+class WMSPullFactory(fhttp.Factory):
 
     requestFactoryClass = WMSPullRequestFactory
 
     def __init__(self):
-        wmshttp.Factory.__init__(self)
+        fhttp.Factory.__init__(self)
         #TODO: better client id ?
         self.client_id = 0
 
@@ -131,6 +137,6 @@ class WMSPullFactory(wmshttp.Factory):
         return self.client_id
 
     def buildProtocol(self, addr):
-        channel = wmshttp.Factory.buildProtocol(self, addr)
+        channel = fhttp.Factory.buildProtocol(self, addr)
         channel.client_id = self.genClientId()
         return channel
