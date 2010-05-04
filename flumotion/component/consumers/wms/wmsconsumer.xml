@@ -18,8 +18,6 @@
       </sockets>
 
       <properties>
-        <property name="mount-point" type="string"
-          _description="The mount point on which the stream can be accessed." />
         <property name="port" type="int"
           _description="The port to listen on." />
       </properties>

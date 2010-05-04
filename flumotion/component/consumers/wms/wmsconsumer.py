@@ -75,11 +75,6 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         pass
 
     def configure_pipeline(self, pipeline, properties):
-        mountPoint = properties.get('mount-point', '')
-        if not mountPoint.startswith('/'):
-            mountPoint = '/' + mountPoint
-        self.mountPoint = mountPoint
-
         appsink = pipeline.get_by_name('appsink')
         appsink.connect("new-preroll", self._new_preroll)
         appsink.connect("new-buffer", self._new_buffer)
