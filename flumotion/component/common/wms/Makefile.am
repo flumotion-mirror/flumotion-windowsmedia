@@ -4,8 +4,8 @@ componentdir = $(libdir)/flumotion/python/flumotion/component/common/wms
 
 component_PYTHON = \
 	__init__.py \
-	asfparser.py \
 	common.py \
+	mmsproducer.py \
 	wmscommon.xml
 	
 component_DATA = 

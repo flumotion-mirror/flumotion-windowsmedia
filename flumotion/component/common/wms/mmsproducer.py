@@ -39,8 +39,10 @@ class MMSProducer(object, log.Loggable):
     def pushHeader(self, data):
         header = self._mms_header(data)
         if self._header is not None:
-            switch = self._mms_switch()
-            self._sink.pushData(self, switch)
+            eos = self._mms_eos(1)
+            self._sink.pushData(self, eos)
+            change = self._mms_change()
+            self._sink.pushData(self, change)
             self.reset()
         self._header = header
         self._sink.setHeader(self, header)
@@ -76,8 +78,14 @@ class MMSProducer(object, log.Loggable):
         self._locid = (self._locid + 1) % 65535
         return "".join(packet)
 
-    def _mms_switch(self):
-        packet = ["$S",
+    def _mms_eos(self, hresult):
+        packet = ["$E",
+                  common.encode_word(8),
+                  common.encode_dword(hresult)]
+        return "".join(packet)
+
+    def _mms_change(self):
+        packet = ["$C",
                   common.encode_word(4),
                   common.encode_dword(0)]
         return "".join(packet)

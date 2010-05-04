@@ -596,7 +596,7 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
 
         self._reset()
 
-        self.debug("Push channel created")
+        self.debug("HTTP channel created")
 
     def requestDone(self, request):
         """Called by the active request when it is done writing"""

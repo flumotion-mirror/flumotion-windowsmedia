@@ -65,7 +65,7 @@ class WMSPullRequest(fhttp.Request):
         self.setHeader("Cache-Control", "no-cache")
         self.setHeader("Pragma", "no-cache"),
         self.setHeader("Pragma", "client-id=%d" % self.channel.client_id)
-        self.setHeader("Pragma", "features=\"broadcast,playlist\"")
+        self.setHeader("Pragma", "features=\"broadcast\"")
 
     def onActivate(self):
         pass
@@ -164,3 +164,4 @@ class WMSPullFactory(fhttp.Factory):
     def pushData(self, producer, data):
         for req in self._requests:
             req.write(data)
+            req.channel.resetTimeout("inactivity")

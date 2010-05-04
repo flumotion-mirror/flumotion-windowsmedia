@@ -4,9 +4,10 @@ componentdir = $(libdir)/flumotion/python/flumotion/component/consumers/wms
 
 component_PYTHON = \
 	__init__.py \
-	wmsconsumer.xml \
+	pull_producer.py \
 	wmsconsumer.py \
-	pull_producer.py
+	wmsconsumer.xml
+	
 
 component_DATA = 
 
