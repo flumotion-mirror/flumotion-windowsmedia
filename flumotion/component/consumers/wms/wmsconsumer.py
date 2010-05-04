@@ -19,15 +19,19 @@
 
 # Headers in this file shall remain intact.
 
+import gst
+
 from twisted.internet import reactor, error, defer
 from zope.interface import implements
 
 from flumotion.common import errors
 from flumotion.common import messages, interfaces
 from flumotion.common.i18n import N_, gettexter
+from flumotion.common.planet import moods
 from flumotion.component import feedcomponent
 from flumotion.component.component import moods
 
+from flumotion.component.common.wms import common, mmsproducer
 from flumotion.component.consumers.wms import pull_producer
 
 __all__ = ['WMSMedium', 'WMSStreamer']
@@ -47,7 +51,7 @@ class WMSMedium(feedcomponent.FeedComponentMedium):
 class WMSConsumer(feedcomponent.ParseLaunchComponent):
     implements(interfaces.IStreamingComponent)
 
-    logCategory = 'cons-wms'
+    logCategory = 'wms-consumer'
 
     componentMediumClass = WMSMedium
 
@@ -61,6 +65,7 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self.port = None
         self.iface = None
 
+        self._producer = None
         self._tport = None
 
     def get_pipeline_string(self, properties):
@@ -76,10 +81,10 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self.mountPoint = mountPoint
 
         appsink = pipeline.get_by_name('appsink')
-        appsink.set_property('emit-signals', True)
         appsink.connect("new-preroll", self._new_preroll)
         appsink.connect("new-buffer", self._new_buffer)
         appsink.connect("eos", self._eos)
+        appsink.set_property('emit-signals', True)
 
         self.port = int(properties.get('port', 8800))
 
@@ -87,14 +92,18 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         return '<WMSStreamer (%s)>' % self.name
 
     def do_stop(self):
+        if self._producer:
+            self._producer.stop()
+            self._producer = None
         if self._tport:
             self._tport.stopListening()
 
+
     def do_setup(self):
-        pass
         try:
             self.debug('Listening on %d' % self.port)
             factory = pull_producer.WMSPullFactory()
+            self._producer = mmsproducer.MMSProducer(factory)
             self._tport = reactor.listenTCP(self.port, factory)
         except error.CannotListenError:
             t = 'Port %d is not available.' % self.port
@@ -121,4 +130,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     ### END OF THREAD-AWARE CODE
 
     def _processBuffer(self, buffer):
-        self.log("Got buffer %s", buffer.timestamp)
+        if self.getMood() == moods.sad.value: return
+        if buffer.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+            self._producer.pushHeader(buffer.data)
+        else:
+            self._producer.pushPacket(buffer.data)

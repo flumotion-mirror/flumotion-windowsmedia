@@ -11,6 +11,7 @@
             <directory name="flumotion/component/common/wms">
                 <filename location="__init__.py" />
                 <filename location="common.py" />
+                <filename location="mmsproducer.py" />
             </directory>
         </directories>
     </bundle>

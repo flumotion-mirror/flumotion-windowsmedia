@@ -162,6 +162,7 @@ class Request(BaseRequest, log.Loggable):
 
         self._parseHeaders(info.headers)
 
+        self.transport_activated = False
         self.transport = None
         if not active:
             self.transport = http.StringTransport()
@@ -212,10 +213,7 @@ class Request(BaseRequest, log.Loggable):
         assert not self.activated, "request already active"
         self.activated = True
 
-        old = self.transport
-        self.transport = self.channel.transport
-        if old is not None:
-            self.transport.write(old.getvalue())
+        self._activateTransport()
 
         if self.finished:
             # The request was finished before being activated
@@ -339,10 +337,12 @@ class Request(BaseRequest, log.Loggable):
 
             seq = []
             for line in lines:
-                self.debug("<<< %s", line)
+                self.log("<<< %s", line)
                 seq.append(line)
                 seq.append("\r\n")
             seq.append("\r\n")
+
+            self._activateTransport()
 
             self.transport.writeSequence(seq)
 
@@ -425,6 +425,15 @@ class Request(BaseRequest, log.Loggable):
 
 
     ### Private Methods ###
+
+    def _activateTransport(self):
+        if self.transport_activated:
+            return
+        old = self.transport
+        self.transport = self.channel.transport
+        if old is not None:
+            self.transport.write(old.getvalue())
+        self.transport_activated = True
 
     def _makeError(self, code, message=None):
         self.persistent = False
@@ -782,7 +791,7 @@ class Channel(TimeoutMixin, basic.LineReceiver, log.Loggable):
             self._header = line
 
     def _gotHeaderEntry(self, line):
-        self.debug(">>> %s", line)
+        self.log(">>> %s", line)
         assert self._reqinfo is not None, "No request info"
 
         info = self._reqinfo
