@@ -31,7 +31,7 @@ from flumotion.common.planet import moods
 from flumotion.component import feedcomponent
 from flumotion.component.component import moods
 
-from flumotion.component.common.wms import common, mmsproducer
+from flumotion.component.common.wms import common, asfparser
 from flumotion.component.consumers.wms import pull_producer
 
 __all__ = ['WMSMedium', 'WMSStreamer']
@@ -65,7 +65,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self.port = None
         self.iface = None
 
-        self._producer = None
+        self._parser = None
+        self._factory = None
         self._tport = None
 
     def get_pipeline_string(self, properties):
@@ -87,9 +88,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         return '<WMSStreamer (%s)>' % self.name
 
     def do_stop(self):
-        if self._producer:
-            self._producer.stop()
-            self._producer = None
+        if self._factory:
+            self._factory.stop()
         if self._tport:
             self._tport.stopListening()
 
@@ -97,9 +97,9 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     def do_setup(self):
         try:
             self.debug('Listening on %d' % self.port)
-            factory = pull_producer.WMSPullFactory()
-            self._producer = mmsproducer.MMSProducer(factory)
-            self._tport = reactor.listenTCP(self.port, factory)
+            self._parser = asfparser.ASFParser(self)
+            self._factory = pull_producer.WMSPullFactory()
+            self._tport = reactor.listenTCP(self.port, self._factory)
         except error.CannotListenError:
             t = 'Port %d is not available.' % self.port
             self.warning(t)
@@ -126,7 +126,14 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
 
     def _processBuffer(self, buffer):
         if self.getMood() == moods.sad.value: return
-        if buffer.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
-            self._producer.pushHeader(buffer.data)
-        else:
-            self._producer.pushPacket(buffer.data)
+        self._parser.pushData(buffer.data)
+
+    ### ASF Parser Callbacks ###
+
+    def pushHeaders(self, parser, header_obj, data_obj):
+        self._factory.pushHeaders(header_obj, data_obj)
+
+    def pushPacket(self, parser, packet):
+        self._factory.pushPacket(packet)
+
+

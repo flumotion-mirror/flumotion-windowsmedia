@@ -21,70 +21,103 @@ class MMSProducer(object, log.Loggable):
 
     logCategory = "wms-mmsprod"
 
-    def __init__(self, sink):
+    def __init__(self):
+        self.reset()
+
+    def register(self, sink):
         self._sink = sink
 
+    def reset(self):
+        self.wait_keyframe = True
         self._header = None
-        self._locid = 0
-        self._incid = 0
+        self._h_locid = 0
+        self._d_locid = 0
+        self._d_incid = 0
 
     def stop(self):
-        pass
-
-    def reset(self):
-        self._header = None
-        self._locid = 0
-        self._incid = 0
-
-    def pushHeader(self, data):
-        header = self._mms_header(data)
-        if self._header is not None:
-            eos = self._mms_eos(1)
+        eos = self.mms_eos(0)
+        if self._sink:
             self._sink.pushData(self, eos)
-            change = self._mms_change()
-            self._sink.pushData(self, change)
+
+    def pushHeaders(self, header_obj, data_obj):
+        data = header_obj.data + data_obj.data
+
+        if self._header == data:
+            return
+
+        self._header_obj = header_obj
+
+        header = self.mms_header(data)
+
+        if self._header is not None:
+            eos = self.mms_eos(1)
+            change = self.mms_change()
+
+            if self._sink:
+                self._sink.pushData(self, eos)
+                self._sink.pushData(self, change)
+
             self.reset()
-        self._header = header
-        self._sink.setHeader(self, header)
-        self._sink.pushData(self, header)
 
-    def pushPacket(self, data):
+        self._header = data
+
+        if self._sink:
+            self._sink.pushData(self, header)
+
+        self._h_locid = (self._h_locid + 1) % 65535
+
+        return header
+
+    def pushPacket(self, packet):
         assert self._header is not None, "No header yet"
-        packet = self._mms_data(data)
-        self._sink.pushData(self, packet)
 
-    def _mms_header(self, data):
+        if self.wait_keyframe:
+            info = self._header_obj.stream_index[packet.stream_number]
+            if not (info.is_video and packet.is_keyframe):
+                return
+
+        self.wait_keyframe = False
+
+        packet = self.mms_data(packet.data)
+
+        self._d_incid = (self._d_incid + 1) % 255 # Max: 254
+        self._d_locid = (self._d_locid + 1) % 65535
+
+        if self._sink:
+            self._sink.pushData(self, packet)
+
+    def mms_header(self, data):
         size = len(data) + 8
+        assert size < 65536, "ASF header too big to fit in one MMS packet"
         packet = ["$H",
                   common.encode_word(size),
-                  common.encode_dword(self._locid),
+                  common.encode_dword(self._h_locid),
                   common.encode_byte(0),
                   common.encode_byte(12),
                   common.encode_word(size),
                   data]
-        self._locid = (self._locid + 1) % 65535
         return "".join(packet)
 
-    def _mms_data(self, data):
+
+    def mms_data(self, data):
         size = len(data) + 8
+        assert size < 65536, "ASF packet too big to fit in one MMS packet"
         packet = ["$D",
                   common.encode_word(size),
-                  common.encode_dword(self._locid),
+                  common.encode_dword(self._d_locid),
                   common.encode_byte(0),
-                  common.encode_byte(self._incid),
+                  common.encode_byte(self._d_incid),
                   common.encode_word(size),
                   data]
-        self._incid = (self._incid + 1) % 256
-        self._locid = (self._locid + 1) % 65535
         return "".join(packet)
 
-    def _mms_eos(self, hresult):
+    def mms_eos(self, hresult):
         packet = ["$E",
                   common.encode_word(8),
                   common.encode_dword(hresult)]
         return "".join(packet)
 
-    def _mms_change(self):
+    def mms_change(self):
         packet = ["$C",
                   common.encode_word(4),
                   common.encode_dword(0)]
