@@ -16,6 +16,9 @@ from flumotion.common import log
 
 from flumotion.component.common.wms import common
 
+MAX_SIZE = 65535
+MAX_LOCID = 4294967295
+MAX_INCID = 254 # Not 255 ! ! !
 
 class MMSProducer(object, log.Loggable):
 
@@ -64,7 +67,7 @@ class MMSProducer(object, log.Loggable):
         if self._sink:
             self._sink.pushData(self, header)
 
-        self._h_locid = (self._h_locid + 1) % 65535
+        self._h_locid = (self._h_locid + 1) % (MAX_LOCID + 1)
 
         return header
 
@@ -80,15 +83,16 @@ class MMSProducer(object, log.Loggable):
 
         packet = self.mms_data(packet.data)
 
-        self._d_incid = (self._d_incid + 1) % 255 # Max: 254
-        self._d_locid = (self._d_locid + 1) % 65535
+        self._d_incid = (self._d_incid + 1) % (MAX_INCID + 1)
+        self._d_locid = (self._d_locid + 1) % (MAX_LOCID + 1)
 
         if self._sink:
             self._sink.pushData(self, packet)
 
     def mms_header(self, data):
         size = len(data) + 8
-        assert size < 65536, "ASF header too big to fit in one MMS packet"
+        assert size <= MAX_SIZE, "ASF header too big to fit in one MMS packet"
+
         packet = ["$H",
                   common.encode_word(size),
                   common.encode_dword(self._h_locid),
@@ -101,7 +105,8 @@ class MMSProducer(object, log.Loggable):
 
     def mms_data(self, data):
         size = len(data) + 8
-        assert size < 65536, "ASF packet too big to fit in one MMS packet"
+        assert size <= MAX_SIZE, "ASF packet too big to fit in one MMS packet"
+
         packet = ["$D",
                   common.encode_word(size),
                   common.encode_dword(self._d_locid),
