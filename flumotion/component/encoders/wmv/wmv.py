@@ -23,7 +23,7 @@ from flumotion.component import feedcomponent
 T_ = gettexter('flumotion')
 
 
-class WMVEncoder(feedcomponent.ParseLaunchComponent):
+class WMVEncoder(feedcomponent.EncoderComponent):
     checkTimestamp = True
     checkOffset = True
     wmvEncoder = None

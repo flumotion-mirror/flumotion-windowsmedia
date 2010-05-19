@@ -1,3 +1,12 @@
+2010-05-19  Xavier Queralt Mateu  <xqueralt@flumotion.com>
+
+	reviewed by: jribas
+
+	* flumotion/component/encoders/wma/wma.py:
+	* flumotion/component/encoders/wmv/wmv.py:
+	* flumotion/component/muxers/asf/asf.py:
+	Reconfigurable encoders and muxers
+
 2010-03-18  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion/test/test_component_wms.py:

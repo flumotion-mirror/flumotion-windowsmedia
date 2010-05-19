@@ -16,7 +16,7 @@ from flumotion.common import gstreamer
 from flumotion.component import feedcomponent
 
 
-class WMAEncoder(feedcomponent.ParseLaunchComponent):
+class WMAEncoder(feedcomponent.EncoderComponent):
     checkTimestamp = True
     checkOffset = True
 
