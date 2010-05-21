@@ -1,3 +1,9 @@
+2010-05-21  Xavier Queralt Mateu  <xqueralt@flumotion.com>
+
+	* flumotion/component/muxers/asf/asf.py:
+	Disable reconfigurable for asf muxer. It doesn't link and causes the
+	muxer to flip-flop
+
 2010-05-19  Xavier Queralt Mateu  <xqueralt@flumotion.com>
 
 	reviewed by: jribas

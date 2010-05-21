@@ -16,7 +16,7 @@ import gst
 
 from flumotion.component import feedcomponent
 
-class ASFMuxer(feedcomponent.MuxerComponent):
+class ASFMuxer(feedcomponent.MultiInputParseLaunchComponent):
     checkOffset = True
 
     def do_check(self):
