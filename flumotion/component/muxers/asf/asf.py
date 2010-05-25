@@ -16,7 +16,7 @@ import gst
 
 from flumotion.component import feedcomponent
 
-class ASFMuxer(feedcomponent.MultiInputParseLaunchComponent):
+class ASFMuxer(feedcomponent.MuxerComponent):
     checkOffset = True
 
     def do_check(self):
@@ -36,3 +36,4 @@ class ASFMuxer(feedcomponent.MultiInputParseLaunchComponent):
         element = pipeline.get_by_name('muxer')
         if properties.has_key('preroll-time'):
             element.set_property('preroll-time', properties['preroll-time'])
+        super(ASFMuxer, self).configure_pipeline(pipeline, properties)
