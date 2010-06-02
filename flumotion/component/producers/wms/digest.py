@@ -16,7 +16,7 @@ from twisted.internet import defer, error
 from twisted.python import failure
 from twisted.cred import error as cerror
 
-from flumotion.component.bouncers import bouncer
+from flumotion.component.bouncers import component
 from flumotion.common import log, keycards, config
 
 class HTTPDigestChecker(log.Loggable):
@@ -46,7 +46,7 @@ class HTTPDigestChecker(log.Loggable):
                 credentials.username)
             return defer.fail(cerror.UnauthorizedLogin())
 
-class DigestBouncer(bouncer.Bouncer):
+class DigestBouncer(component.Bouncer):
     keycardClasses = (keycards.HTTPDigestKeycard,)
 
     def init(self):

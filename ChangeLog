@@ -1,3 +1,8 @@
+2010-06-02  Alvin Delagon  <adelagon@flumotion.com>
+
+	* flumotion/component/producers/wms/digest.py:
+	Backporting multi-bouncer branch from NTT.
+
 2010-05-25  Xavier Queralt Mateu  <xqueralt@flumotion.com>
 
 	* flumotion/component/muxers/asf/asf.py:
