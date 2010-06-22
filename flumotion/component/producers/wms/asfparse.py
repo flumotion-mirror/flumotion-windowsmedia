@@ -628,8 +628,11 @@ class ASFSrc(gst.BaseSrc):
 
             self.queue.push((gst.FLOW_OK, buf))
 
-        if eos:
-            self._pushResetEvent()
+        # FIXME: This leads to the producer sending two reset events and
+        # breaking the decoder. We should make the decoder more robust and/or
+        # do not send useless events
+        #if eos:
+        #    self._pushResetEvent()
 
     def _pushResetEvent(self):
         s = gst.Structure('flumotion-reset')
