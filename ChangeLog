@@ -1,3 +1,12 @@
+2010-07-30  Xavier Queralt  <xqueralt@flumotion.com>
+
+	patch by: Alvin Delagon, Zaheer Abbas Merali
+
+	* flumotion/component/producers/wms/digest.py:
+	* flumotion/component/producers/wms/wms.py:
+	Use KeycardHTTPDigest because HTTPDigestKeycard has been
+	deprecated.
+
 2010-06-22  Xavier Queralt Mateu  <xqueralt@flumotion.com>
 
 	* flumotion/component/producers/wms/asfparse.py:

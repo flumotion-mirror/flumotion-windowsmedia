@@ -47,7 +47,7 @@ class HTTPDigestChecker(log.Loggable):
             return defer.fail(cerror.UnauthorizedLogin())
 
 class DigestBouncer(component.Bouncer):
-    keycardClasses = (keycards.HTTPDigestKeycard,)
+    keycardClasses = (keycards.KeycardHTTPDigest,)
 
     def init(self):
         self._checker = HTTPDigestChecker()

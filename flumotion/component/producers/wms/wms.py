@@ -226,7 +226,7 @@ class DigestAuth(log.Loggable):
 
         response = attrs['response']
 
-        keycard = keycards.HTTPDigestKeycard(username)
+        keycard = keycards.KeycardHTTPDigest(username)
         keycard.nonce = nonce
         keycard.response = response
 
