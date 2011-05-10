@@ -54,6 +54,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     logCategory = 'wms-consumer'
 
     componentMediumClass = WMSMedium
+    keepStreamheaderForLater = True
+    swallowNewSegment = False
 
     def init(self):
         reactor.debug = True
