@@ -54,8 +54,9 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     logCategory = 'wms-consumer'
 
     componentMediumClass = WMSMedium
+
     keepStreamheaderForLater = True
-    swallowNewSegment = False
+    dropStreamHeaders = False
 
     def init(self):
         reactor.debug = True
@@ -79,12 +80,22 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
 
     def configure_pipeline(self, pipeline, properties):
         appsink = pipeline.get_by_name('appsink')
+        
+        # Reset the parser if we got a new buffer with IN_CAPS
+        appsink.get_pad('sink').add_buffer_probe(self._check_incaps)
+
         appsink.connect("new-preroll", self._new_preroll)
         appsink.connect("new-buffer", self._new_buffer)
         appsink.connect("eos", self._eos)
         appsink.set_property('emit-signals', True)
 
         self.port = int(properties.get('port', 8800))
+ 
+    def _check_incaps(self, pad, buffer):
+        if buffer.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+            self.debug("Restarting the parser to process the new stream.")
+            self._parser.reset()
+        return True
 
     def __repr__(self):
         return '<WMSStreamer (%s)>' % self.name
