@@ -1,3 +1,8 @@
+2011-05-25  Andoni Morales Alastruey  <amorales@flumotion.com>
+
+	* flumotion/component/encoders/wmv/wmv.py:
+	Set 'bitrate' as a modifiable property
+
 2010-07-30  Xavier Queralt  <xqueralt@flumotion.com>
 
 	patch by: Alvin Delagon, Zaheer Abbas Merali

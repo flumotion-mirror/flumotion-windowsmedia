@@ -98,3 +98,8 @@ class WMVEncoder(feedcomponent.EncoderComponent):
         self.uiState.set('complexity', element.get_property('complexity'))
         self.uiState.set('bitrate', formatStorage(element.get_property('bitrate')) + 'bit/s')
 
+    def modify_property_Bitrate(self, value):
+        if not self.checkPropertyType('bitrate', value, int):
+            return False
+        self.modify_element_property('encoder', 'bitrate', value)
+        return True
