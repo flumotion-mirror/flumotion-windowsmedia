@@ -5,7 +5,6 @@ componentdir = $(libdir)/flumotion/python/flumotion/component/common
 SUBDIRS = \
         wms
 component_PYTHON = \
-	__init__.py \
 	compcommon.xml \
 	http.py
 
@@ -14,4 +13,5 @@ component_DATA =
 clean-local:
 	rm -rf *.pyc *.pyo
 
-EXTRA_DIST = $(component_DATA)
+# We do not install __init__.py since it would override flumotion's
+EXTRA_DIST = $(component_DATA) __init__.py
