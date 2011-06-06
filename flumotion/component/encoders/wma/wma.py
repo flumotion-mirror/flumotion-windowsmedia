@@ -37,14 +37,16 @@ class WMAEncoder(feedcomponent.EncoderComponent):
     def get_pipeline_string(self, properties):
         gstElements = ['audioconvert', 'fluwmaenc name=encoder']
 
+        channels = properties.get('channels', 2)
+
         if 'samplerate' in properties:
             resampler = 'audioresample'
             if gstreamer.element_factory_exists('legacyresample'):
                 resampler = 'legacyresample'
 
             gstElements.insert(1, resampler)
-            gstElements.insert(2, 'audio/x-raw-int,rate=%d'
-                    % properties['samplerate'])
+            gstElements.insert(2, 'audio/x-raw-int,rate=%d,channels=%d'
+                    % (properties['samplerate'], channels))
 
         if 'drop-probability' in properties:
             gstElements.insert(0, 'identity drop-probability=%f silent=TRUE'

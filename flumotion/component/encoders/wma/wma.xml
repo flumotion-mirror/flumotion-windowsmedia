@@ -26,6 +26,8 @@
                   _description="Bitrate to encode at (in bps)" />
         <property name="samplerate" type="int"
                   _description="Samplerate to encode at (in Hz)"  />
+        <property name="channels" type="int"
+                  _description="Number of output channels"  />
         <property name="drop-probability" type="float"
                   _description="workaround for loss of sync"  />
       </properties>
