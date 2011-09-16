@@ -15,6 +15,9 @@ AC_SUBST(FLU_REQ, 0.5.4)
 GST_010_SUPPORTED=yes
 AC_SUBST(GST_010_SUPPORTED)
 
+dnl Start commit used to autogenrate ChangeLog from 'git log'
+AC_SUBST(GIT_LOG_START_COMMIT, "c976e276f4a3c115c4b11b06509d433c549d7907")
+
 AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
 
 AS_AC_EXPAND(LIBDIR, $libdir)
