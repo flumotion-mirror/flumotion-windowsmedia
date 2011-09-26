@@ -11,7 +11,7 @@ SUBDIRS = flumotion conf common misc
 
 EXTRA_DIST = \
 	env.in \
-	LICENSE.Flumotion \
+	LICENSE.LGPL \
 	flumotion-windowsmedia.spec
 
 PYCHECKER_WHITELIST = flumotion/component/*/*/*.py \

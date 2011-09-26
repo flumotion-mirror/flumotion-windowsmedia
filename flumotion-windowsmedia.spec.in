@@ -4,8 +4,8 @@ Release:        @PACKAGE_VERSION_RELEASE@
 Summary:        Flumotion Windows Media Streaming support.
 
 Group:          Applications/Internet
-License:	Proprietary
-URL:            http://www.fluendo.com/
+License:	LGPL
+URL:            http://www.fluendo.net/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
@@ -44,7 +44,7 @@ rm -rf $RPM_BUILD_ROOT
 # %files -f flumotion-windowsmedia.lang
 %files
 %defattr(-,root,root,-)
-%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
+%doc ChangeLog COPYING README AUTHORS LICENSE.LGPL
 %{_libdir}/flumotion
 
 %changelog
