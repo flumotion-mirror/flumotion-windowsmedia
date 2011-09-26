@@ -32,12 +32,13 @@ class WMAAudioEncoder(AudioEncoder):
 
     def __init__(self):
         super(WMAAudioEncoder, self).__init__()
-
         self.properties.bitrate = 64
+        self.samplerate = 44100
 
     def getProperties(self):
         properties = super(WMAAudioEncoder, self).getProperties()
-        properties['bitrate'] *= 1000
+        properties.bitrate  *= 1000
+        properties.samplerate = self.samplerate
         return properties
 
 
@@ -50,11 +51,28 @@ class WMAStep(AudioEncoderStep):
     # WizardStep
 
     def setup(self):
-        self.bitrate.set_range(5, 128)
-        self.bitrate.set_value(64)
+        producer = self.wizard.getScenario().getAudioProducer(self.wizard)
+        samplerate = int(producer.getSamplerate())
+        self.model.samplerate = samplerate
+        self.debug('Samplerate of audio producer: %r' % samplerate)
+
+        if samplerate == 8000:
+            self.bitrate.set_range(12, 12)
+            self.model.properties.bitrate = 12
+        elif samplerate == 16000:
+            self.bitrate.set_range(16, 20)
+            self.model.properties.bitrate = 20
+        elif samplerate == 22050:
+            self.bitrate.set_range(20, 32)
+            self.model.properties.bitrate = 32
+        elif samplerate == 32000:
+            self.bitrate.set_range(32, 48)
+            self.model.properties.bitrate = 48
+        elif samplerate == 44100 or samplerate == 48000:
+            self.bitrate.set_range(64, 198)
+            self.model.properties.bitrate = 128
 
         self.bitrate.data_type = int
-
         self.add_proxy(self.model.properties, ['bitrate'])
 
     def workerChanged(self, worker):
