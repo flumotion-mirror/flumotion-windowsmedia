@@ -17,6 +17,7 @@ if test ! -f common/flumotion-trial;
   exit 1
 fi
 
+rm -f .version
 aclocal -I common || exit 1
 # libtoolize --force || exit 1
 # autoheader || exit 1

@@ -11,6 +11,8 @@ SUBDIRS = flumotion conf common misc
 
 EXTRA_DIST = \
 	env.in \
+        .version \
+        RELEASE \
 	LICENSE.LGPL \
 	flumotion-windowsmedia.spec
 
@@ -22,5 +24,9 @@ COVERAGE_MODULES = \
 	flumotion.component.muxers.asf \
 	flumotion.component.encoders.wmv \
 	flumotion.component.encoders.wma
+
+BUILT_SOURCES = $(top_srcdir)/.version
+$(top_srcdir)/.version:                                                                                 
+	echo $(VERSION) > $@-t && mv $@-t $@
 
 dist: changelog

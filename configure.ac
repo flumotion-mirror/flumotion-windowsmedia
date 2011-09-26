@@ -1,17 +1,18 @@
-AC_INIT(flumotion-windowsmedia, 
-   0.5.1.1,
-   https://code.area51.fluendo.com/private/trac/newticket?component=flumotion-windowsmedia,
-   flumotion-windowsmedia)
+AC_INIT(flumotion-windowsmedia, m4_esyscmd([ test -z "$VERSION" && VERSION=0.10.0;
+                                common/version-gen $VERSION .tarball-version]),
+   [flumotion-devel@lists.fluendo.com],
+   [flumotion-windowsmedia], [http://www.flumotion.net/])
+
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AS_VERSION
-
+AC_SUBST(PACKAGE_VERSION_SPEC, `echo $VERSION | tr '-' '_'`)
 AS_NANO
 
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
-AC_SUBST(FLU_REQ, 0.5.4)
+AC_SUBST(FLU_REQ, 0.10.0)
 GST_010_SUPPORTED=yes
 AC_SUBST(GST_010_SUPPORTED)
 
@@ -105,3 +106,11 @@ flumotion/project/Makefile
 flumotion/project/windowsmedia.py
 flumotion-windowsmedia.spec
 )
+
+echo
+echo "    $PACKAGE_STRING ($PACKAGE_VERSION_RELEASE)"
+echo
+echo "    pychecker:              $PYCHECKER"
+echo "    epydoc:                 $EPYDOC"
+echo
+echo "Now type \"make\" to build flumotion"
