@@ -1,4 +1,4 @@
-AC_INIT(flumotion-windowsmedia, m4_esyscmd([ test -z "$VERSION" && VERSION=0.10.0;
+AC_INIT(flumotion-windowsmedia, m4_esyscmd([ test -z "$VERSION" && VERSION=0.11.0.1;
                                 common/version-gen $VERSION .tarball-version]),
    [flumotion-devel@lists.fluendo.com],
    [flumotion-windowsmedia], [http://www.flumotion.net/])
