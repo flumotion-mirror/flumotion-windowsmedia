@@ -21,6 +21,7 @@
 
 import gst
 
+from twisted.cred import credentials
 from twisted.internet import reactor, error, defer
 from zope.interface import implements
 
@@ -30,6 +31,8 @@ from flumotion.common.i18n import N_, gettexter
 from flumotion.common.planet import moods
 from flumotion.component import feedcomponent
 from flumotion.component.component import moods
+from flumotion.component.misc.porter import porterclient
+from flumotion.twisted import fdserver
 
 from flumotion.component.common.wms import common, asfparser
 from flumotion.component.consumers.wms import pull_producer
@@ -65,7 +68,18 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         self.caps = None
         self.mountPoint = None
 
+        self.type = 'slave'
+
+        # Used if we've slaved to a porter.
+        self._pbclient = None
+        self._porterUsername = None
+        self._porterPassword = None
+        self._porterPath = None
+
+        # Or if we're a master, we open our own port here. Also used for URLs
+        # in the porter case.
         self.port = None
+        # We listen on this interface, if set.
         self.iface = None
 
         self._parser = None
@@ -78,9 +92,24 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
     def check_properties(self, props, addMessage):
         pass
 
+    def parseProperties(self, properties):
+        mountPoint = properties.get('mount-point', '')
+        if not mountPoint.startswith('/'):
+            mountPoint = '/' + mountPoint
+        self.mountPoint = mountPoint
+
+        self.type = properties.get('type', 'master')
+        if self.type == 'slave':
+            # already checked for these in do_check
+            self._porterPath = properties['porter-socket-path']
+            self._porterUsername = properties['porter-username']
+            self._porterPassword = properties['porter-password']
+
+        self.port = int(properties.get('port', 8800))
+
     def configure_pipeline(self, pipeline, properties):
         appsink = pipeline.get_by_name('appsink')
-        
+
         # Reset the parser if we got a new buffer with IN_CAPS
         appsink.get_pad('sink').add_buffer_probe(self._check_incaps)
 
@@ -89,7 +118,8 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
         appsink.connect("eos", self._eos)
         appsink.set_property('emit-signals', True)
 
-        self.port = int(properties.get('port', 8800))
+        self.parseProperties(properties)
+
  
     def _check_incaps(self, pad, buffer):
         if buffer.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
@@ -108,20 +138,38 @@ class WMSConsumer(feedcomponent.ParseLaunchComponent):
 
 
     def do_setup(self):
-        try:
-            self.debug('Listening on %d' % self.port)
-            self._parser = asfparser.ASFParser(self)
-            self._factory = pull_producer.WMSPullFactory()
-            self._tport = reactor.listenTCP(self.port, self._factory)
-        except error.CannotListenError:
-            t = 'Port %d is not available.' % self.port
-            self.warning(t)
-            m = messages.Error(T_(N_(
-                "Network error: TCP port %d is not available."),
-                                  self.port))
-            self.addMessage(m)
-            self.setMood(moods.sad)
-            return defer.fail(errors.ComponentSetupHandledError(t))
+        self._parser = asfparser.ASFParser(self)
+        self._factory = pull_producer.WMSPullFactory()
+        if self.type == 'slave':
+            # Streamer is slaved to a porter.
+
+            self._porterDeferred = d = defer.Deferred()
+            mountpoints = [self.mountPoint]
+            self._pbclient = porterclient.HTTPPorterClientFactory(
+                    self._factory, mountpoints, d)
+
+            creds = credentials.UsernamePassword(self._porterUsername,
+                self._porterPassword)
+            self._pbclient.startLogin(creds, self._pbclient.medium)
+
+            self.info("Starting porter login at \"%s\"", self._porterPath)
+            # This will eventually cause d to fire
+            reactor.connectWith(
+                fdserver.FDConnector, self._porterPath,
+                self._pbclient, 10, checkPID=False)
+        else:
+            try:
+                self.debug('Listening on %d' % self.port)
+                self._tport = reactor.listenTCP(self.port, self._factory)
+            except error.CannotListenError:
+                t = 'Port %d is not available.' % self.port
+                self.warning(t)
+                m = messages.Error(T_(N_(
+                    "Network error: TCP port %d is not available."),
+                                      self.port))
+                self.addMessage(m)
+                self.setMood(moods.sad)
+                return defer.fail(errors.ComponentSetupHandledError(t))
 
     ### START OF THREAD-AWARE CODE (called from non-reactor threads)
 

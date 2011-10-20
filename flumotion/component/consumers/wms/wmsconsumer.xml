@@ -18,8 +18,23 @@
       </sockets>
 
       <properties>
+        <property name="mount-point" type="string"
+          _description="The mount point on which the stream can be accessed." />
+
+        <property name="type" type="string"
+                  _description="'master' to listen on a port, or 'slave' to slave to a porter (default master)." />
+
+        <!-- If type is 'master' (default) -->
         <property name="port" type="int"
-          _description="The port to listen on." />
+                  _description="The port to listen on (if type is 'master')." />
+
+        <!-- If type is 'slave' -->
+        <property name="porter-socket-path" type="string"
+                  _description="The path to the socket to communicate with the porter." />
+        <property name="porter-username" type="string"
+                  _description="The username to authenticate to the porter." />
+        <property name="porter-password" type="string"
+                  _description="The password to authenticate to the porter." />
       </properties>
     </component>
   </components>
