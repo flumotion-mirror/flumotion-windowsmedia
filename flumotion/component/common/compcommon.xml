@@ -8,7 +8,6 @@
 
         <directories>
             <directory name="flumotion/component/common">
-                <filename location="__init__.py" />
                 <filename location="http.py" />
             </directory>
         </directories>
