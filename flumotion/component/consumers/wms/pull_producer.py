@@ -65,12 +65,13 @@ class WMSPullRequest(fhttp.Request):
         self.protocol = fhttp.HTTP10
 
         client_id = None
-        for pragma in self.getRecvHeader("Pragma"):
-            if pragma.startswith("client-id="):
-                try:
-                    client_id = int(pragma[10:])
-                except ValueError:
-                    pass
+        if self.getRecvHeader("Pragma"):
+            for pragma in self.getRecvHeader("Pragma"):
+                if pragma.startswith("client-id="):
+                    try:
+                        client_id = int(pragma[10:])
+                    except ValueError:
+                        pass
 
         self.requested_client_id = client_id
         self.client_id = self.channel.factory.getClientId(client_id)
